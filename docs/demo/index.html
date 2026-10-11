@@ -440,6 +440,15 @@ function currentDye(){
 }
 
 let visualSeq = 0;
+let preloaded = false;
+function preloadForms(){
+  // 后台预加载全部形态图（进化瞬间无缝切换）
+  if(preloaded) return;
+  preloaded = true;
+  const slugs = new Set();
+  for(const tiers of Object.values(CFG.forms)) for(const t of ["2","3","4"]) if(tiers[t]) slugs.add(tiers[t].slug);
+  for(const slug of slugs) loadBase(slug);
+}
 async function updateSpiritVisual(){
   if(!state){ $("spiritSlot").innerHTML = ""; return; }
   const seq = ++visualSeq;
@@ -454,12 +463,23 @@ async function updateSpiritVisual(){
       slot.dataset.key = key;
       slot.innerHTML = `<div class="blobWrap" id="blob">${blobSVG(hex)}</div>`;
     }
+    preloadForms();
     return;
   }
   const key = `${form.slug}|${dye.hex}|${dye.s.toFixed(2)}`;
   if(slot.dataset.key === key) return;
   const cv = await getTintedCanvas(form.slug, dye.hex, dye.s);
-  if(seq !== visualSeq || !cv) return;   // 已有更新的渲染请求则丢弃
+  if(seq !== visualSeq) return;   // 已有更新的渲染请求则丢弃
+  if(!cv){
+    // 兜底：加载失败时直接显示原图，避免停留在旧形态
+    const img = document.createElement("img");
+    img.className = "spiritImg"; img.alt = state.name;
+    img.src = `../../assets/spirits/${form.slug}.png`;
+    slot.dataset.key = key;
+    slot.innerHTML = "";
+    slot.appendChild(img);
+    return;
+  }
   cv.className = "spiritImg";
   slot.dataset.key = key;
   slot.innerHTML = "";
