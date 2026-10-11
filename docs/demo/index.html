@@ -275,6 +275,7 @@ let models3d = [];       // [[slug,label],...]
 
 /* ========= 加载配置 ========= */
 async function boot(){
+  bind();          // 先绑定交互，网络慢时早期点击也不丢失
   const [lineage, forms] = await Promise.all([
     fetch("../../data/lineage.json").then(r=>r.json()),
     fetch("../../data/forms.json").then(r=>r.json()),
@@ -284,7 +285,6 @@ async function boot(){
   buildGallery();
   init3d();
   render();
-  bind();
 }
 function loadState(){
   try{
@@ -849,6 +849,7 @@ function downloadCard(cv){
 /* ---- 交互绑定 ---- */
 function bind(){
   $("btnHatch").addEventListener("click", ()=>{
+    if(!CFG){ showBanner("正在加载数据……请一秒后再点一次"); return; }
     const name = ($("hatchName").value||"").trim() || "麦麦";
     state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[], ordered_before:false, fed_lins:{}, dye_flags:{}};
     saveState(); render();
