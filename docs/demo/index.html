@@ -89,7 +89,11 @@
     box-shadow:0 6px 18px rgba(224,75,58,.35)}
   .btnOrder:active{transform:translateY(1px)}
   .btn:disabled{opacity:.8; cursor:default}
-  .btnGhost{background:var(--card2); color:var(--dim); border:1px solid var(--line); flex:0 0 108px}
+  .btnImport{background:var(--card2); color:var(--txt); border:1px solid var(--line)}
+  .resetRow{text-align:center; margin-top:10px}
+  .linkBtn{background:none; border:none; color:var(--faint); font-size:12.5px; cursor:pointer;
+    font-family:inherit; text-decoration:underline; text-underline-offset:3px; padding:4px 8px}
+  .linkBtn:active{color:var(--txt)}
 
   /* hatch */
   .hatchBox{padding:8px 0 4px}
@@ -115,6 +119,13 @@
     font-size:10.5px; font-weight:800; min-width:18px; height:18px; line-height:18px; border-radius:99px; padding:0 5px}
   .foodItem .dot{position:absolute; top:6px; left:6px; width:8px; height:8px; border-radius:50%}
   .empty{color:var(--faint); font-size:13px; padding:16px 0; text-align:center}
+
+  /* 导入的订单记录（仅导入账号数据的订单显示门店） */
+  .orderRow{padding:9px 2px; border-bottom:1px dashed var(--line); font-size:12.5px; line-height:1.5}
+  .orderRow:last-child{border-bottom:none}
+  .orderRow .ostore{color:var(--yellow); font-weight:700}
+  .orderRow .otime{color:var(--faint); font-size:11.5px; margin-left:6px}
+  .orderRow .oitems{color:var(--dim); margin-top:2px}
 
   /* gallery */
   .lineRow{margin-bottom:12px}
@@ -154,6 +165,29 @@
     transition:transform .3s ease; z-index:50; pointer-events:none}
   #toast.show{transform:translateX(-50%) translateY(0)}
   #toast b{color:var(--yellow)}
+
+  /* 导入弹窗 */
+  #importModal{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:18px}
+  .modalMask{position:absolute; inset:0; background:rgba(0,0,0,.62)}
+  .modalBody{position:relative; width:100%; max-width:560px; max-height:86vh; overflow:auto;
+    background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px}
+  .modalBody h4{margin:0 0 4px; display:flex; justify-content:space-between; align-items:center; font-size:16px}
+  .modalX{background:none; border:none; color:var(--faint); font-size:16px; cursor:pointer; font-family:inherit; padding:4px 8px}
+  .modalBody ol{margin:8px 0 10px; padding-left:20px; font-size:13px; color:var(--dim); line-height:1.75}
+  .modalBody ol b{color:var(--txt)}
+  .modalBody code{background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:12px}
+  .dropzone{border:1.5px dashed #4a443e; border-radius:14px; padding:20px 14px; text-align:center;
+    color:var(--dim); font-size:13.5px; cursor:pointer; margin:10px 0; background:rgba(255,255,255,.015)}
+  .dropzone.over, .dropzone:active{border-color:var(--yellow); color:var(--txt)}
+  #pasteArea{width:100%; min-height:70px; background:var(--card2); border:1px solid var(--line);
+    border-radius:12px; color:var(--txt); padding:10px 12px; font-size:12.5px; font-family:inherit;
+    resize:vertical; outline:none; box-sizing:border-box}
+  #pasteArea:focus{border-color:var(--yellow)}
+  .btnDoImport{width:100%; margin-top:10px; background:linear-gradient(135deg,#ffc72c,#f0a60a);
+    color:#2a1f00; border:none; border-radius:12px; padding:13px; font-size:15px; font-weight:800;
+    cursor:pointer; font-family:inherit}
+  .modalHint{font-size:11.5px; color:var(--faint); margin-top:10px; line-height:1.65}
+  .modalHint a{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -163,7 +197,7 @@
     <a class="starBtn" href="https://github.com/WuJunwei2003/McDonald-pet" target="_blank" rel="noopener">⭐ Star</a>
   </header>
 
-  <div class="notice">试玩版使用<b>模拟订单</b>数据，零安装开箱即玩；<b>完整版</b>可同步你真实的麦当劳订单、解锁全部形态与 3D 手办（见文末 GitHub）。</div>
+  <div class="notice">试玩版支持「🎲 模拟订单」零门槛开箱即玩；有 MCP 账号可通过「📥 导入账号数据」用<b>你自己的真实订单</b>喂养。完整版可实时同步订单、解锁全部形态与 3D 手办（见文末 GitHub）。</div>
 
   <!-- 精灵舞台 -->
   <section class="card stageCard" id="stageCard">
@@ -186,7 +220,10 @@
     <div class="tip" id="tip"></div>
     <div class="actions" id="actions" style="display:none">
       <button class="btn btnOrder" id="btnOrder">🎲 模拟点一单</button>
-      <button class="btn btnGhost" id="btnReset">重新开始</button>
+      <button class="btn btnImport" id="btnImport">📥 导入账号数据</button>
+    </div>
+    <div class="resetRow" id="resetRow" style="display:none">
+      <button class="linkBtn" id="btnReset">↺ 重新开始（换一只养）</button>
     </div>
     <div class="hatchBox" id="hatchBox">
       <div class="egg">🥚</div>
@@ -202,7 +239,13 @@
   <section class="card" id="pantryCard" style="display:none">
     <div class="pantryHead"><h3>🍱 食物库存 <small>点一下 = 喂一口</small></h3><span id="pantryCount" style="font-size:12px;color:var(--faint)"></span></div>
     <div class="pantryGrid" id="pantryGrid"></div>
-    <div class="empty" id="pantryEmpty">还没有食物 —— 先去上面「模拟点一单」</div>
+    <div class="empty" id="pantryEmpty">还没有食物 —— 先去上面「模拟点一单」或「导入账号数据」</div>
+  </section>
+
+  <!-- 导入的订单记录（只有导入账号数据才显示，模拟订单不在此出现） -->
+  <section class="card" id="ordersCard" style="display:none">
+    <div class="pantryHead"><h3>📋 导入的订单 <small>· 门店版</small></h3><span id="ordersMeta" style="font-size:12px;color:var(--faint)"></span></div>
+    <div id="ordersList"></div>
   </section>
 
   <!-- 六系进化谱 -->
@@ -235,8 +278,29 @@
 
 <div id="toast"></div>
 
-<script type="module" src="../../assets/3d/model-viewer.min.js"></script>
+<!-- 导入账号数据弹窗 -->
+<div id="importModal" style="display:none">
+  <div class="modalMask" id="modalMask"></div>
+  <div class="modalBody">
+    <h4>📥 导入账号数据 <button class="modalX" id="modalX" aria-label="关闭">✕</button></h4>
+    <div style="font-size:12.5px; color:var(--dim); line-height:1.6">试玩页是纯静态页面，出于安全无法直连麦当劳服务器。想用<b style="color:var(--txt)">你自己的真实订单</b>喂养，两步即可：</div>
+    <ol>
+      <li><b>导出</b>：完整版运行 <code>python mcpet.py export</code>；或下载
+        <a href="export_orders.py" download style="color:var(--yellow)">独立导出脚本</a> 运行
+        <code>python export_orders.py</code> → 得到 <code>mcpet-orders.json</code></li>
+      <li><b>导入</b>：把文件拖到下面（或选择文件 / 直接粘贴内容）</li>
+    </ol>
+    <div class="dropzone" id="dropzone">📄 拖入 mcpet-orders.json　·　或点击选择文件</div>
+    <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+    <textarea id="pasteArea" placeholder="也可以直接粘贴内容（支持导出文件 / order-list 原始 JSON）…"></textarea>
+    <button class="btnDoImport" id="btnDoImport">开始导入</button>
+    <div class="modalHint">🔒 数据只保存在你自己的浏览器（localStorage），不会上传到任何服务器。<br>
+      没有数据想先试试流程？<a href="sample-orders.json" download>下载示例文件</a> 导入看看效果。</div>
+  </div>
+</div>
+
 <script src="dye.js"></script>
+<script src="import.js"></script>
 <script>
 "use strict";
 /* ========= 常量与工具 ========= */
@@ -272,6 +336,10 @@ let state = null;        // 游戏状态
 let seen = {};           // 收集记录 {"薯-2":true}
 let pantry = {};         // {name: qty}
 let models3d = [];       // [[slug,label],...]
+let importedOrders = []; // 导入的订单记录（仅"导入账号数据"产生，模拟订单不进入）
+let importedIds = [];    // 已导入订单去重集合（保留更久）
+
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 /* ========= 加载配置 ========= */
 async function boot(){
@@ -292,12 +360,13 @@ function loadState(){
     if(raw){
       const d = JSON.parse(raw);
       state = d.state || null; seen = d.seen || {}; pantry = d.pantry || {};
+      importedOrders = d.imported || []; importedIds = d.importIds || [];
       if(state){ state.fed_lins = state.fed_lins || {}; state.dye_flags = state.dye_flags || {}; }
     }
   }catch(e){ /* ignore */ }
 }
 function saveState(){
-  try{ localStorage.setItem(KEY, JSON.stringify({state, seen, pantry})); }catch(e){}
+  try{ localStorage.setItem(KEY, JSON.stringify({state, seen, pantry, imported: importedOrders, importIds: importedIds})); }catch(e){}
 }
 
 /* ========= 养成引擎（与 Python 版同规则） ========= */
@@ -413,7 +482,7 @@ function loadBase(slug){
     const im = new Image();
     im.onload = ()=>{ baseImgs[slug] = im; res(im); };
     im.onerror = ()=>res(null);
-    im.src = `../../assets/spirits/${slug}.png`;
+    im.src = `assets/spirits/${slug}.webp`;
   });
 }
 
@@ -440,14 +509,15 @@ function currentDye(){
 }
 
 let visualSeq = 0;
-let preloaded = false;
+const preloadedSlugs = new Set();
 function preloadForms(){
-  // 后台预加载全部形态图（进化瞬间无缝切换）
-  if(preloaded) return;
-  preloaded = true;
-  const slugs = new Set();
-  for(const tiers of Object.values(CFG.forms)) for(const t of ["2","3","4"]) if(tiers[t]) slugs.add(tiers[t].slug);
-  for(const slug of slugs) loadBase(slug);
+  // 只预载"当前可能进化到"的系（本命系或倾向最高的系）——不再首屏全量预载 16 张图
+  const lin = state && (state.lineage || topLineage());
+  if(!lin || !CFG.forms[lin]) return;
+  for(const t of ["2","3","4"]){
+    const f = CFG.forms[lin][t];
+    if(f && !preloadedSlugs.has(f.slug)){ preloadedSlugs.add(f.slug); loadBase(f.slug); }
+  }
 }
 async function updateSpiritVisual(){
   if(!state){ $("spiritSlot").innerHTML = ""; return; }
@@ -455,6 +525,7 @@ async function updateSpiritVisual(){
   const slot = $("spiritSlot");
   const form = formFor();
   const dye = currentDye();
+  preloadForms();
   if(!form){
     // 幼体：小团子的颜色 = 当前混色（喂什么染什么）
     const hex = dye ? dye.hex : "#BFB8AC";
@@ -463,7 +534,6 @@ async function updateSpiritVisual(){
       slot.dataset.key = key;
       slot.innerHTML = `<div class="blobWrap" id="blob">${blobSVG(hex)}</div>`;
     }
-    preloadForms();
     return;
   }
   const key = `${form.slug}|${dye.hex}|${dye.s.toFixed(2)}`;
@@ -474,7 +544,7 @@ async function updateSpiritVisual(){
     // 兜底：加载失败时直接显示原图，避免停留在旧形态
     const img = document.createElement("img");
     img.className = "spiritImg"; img.alt = state.name;
-    img.src = `../../assets/spirits/${form.slug}.png`;
+    img.src = `assets/spirits/${form.slug}.webp`;
     slot.dataset.key = key;
     slot.innerHTML = "";
     slot.appendChild(img);
@@ -491,8 +561,10 @@ function render(){
   const hasSpirit = !!state;
   $("hatchBox").style.display = hasSpirit ? "none" : "block";
   $("actions").style.display = hasSpirit ? "flex" : "none";
+  $("resetRow").style.display = hasSpirit ? "block" : "none";
   $("pantryCard").style.display = hasSpirit ? "block" : "none";
   $("expWrap").style.display = hasSpirit ? "block" : "none";
+  renderOrders();
 
   if(!hasSpirit){
     $("spiritSlot").innerHTML = "";
@@ -546,7 +618,7 @@ function render(){
 
   // 提示
   const tips = {
-    empty: "先去「🎲 模拟点一单」拿食物",
+    empty: "先去「🎲 模拟点一单」拿食物（有 MCP 账号可「📥 导入账号数据」用真实订单）",
     young: "点下面的食物喂它——喂得最多的系别决定它变成什么（30 经验成形）；喂异系还会给它「染色」🎨",
     grown: "继续喂！本命系 ×1.5；喂异系攒满 20 会变异 ⚡，颜色也会慢慢变化 🎨",
     variant: "它已是变异体！换只精灵试试别的系？点「重新开始」"
@@ -587,11 +659,25 @@ function renderPantry(){
     div.innerHTML = `
       ${lin ? `<span class="dot" style="background:${LINE_COLOR[lin]}"></span>` : ""}
       <span class="qty">×${qty}</span>
-      ${icon ? `<img src="${icon}" alt="">` : `<div style="height:46px;display:flex;align-items:center;justify-content:center;font-size:26px">🍽️</div>`}
-      <div class="fname">${name}</div>`;
+      ${icon ? `<img src="${icon}" alt="" loading="lazy">` : `<div style="height:46px;display:flex;align-items:center;justify-content:center;font-size:26px">🍽️</div>`}
+      <div class="fname">${esc(name)}</div>`;
     div.addEventListener("click", ()=>feedFromPantry(name));
     grid.appendChild(div);
   }
+}
+/* ---- 导入的订单记录（只有账号导入的订单才显示门店；模拟订单永不进入） ---- */
+function renderOrders(){
+  const show = !!state && importedOrders.length > 0;
+  $("ordersCard").style.display = show ? "block" : "none";
+  if(!show) return;
+  $("ordersMeta").textContent = `共导入 ${importedIds.length} 单`;
+  $("ordersList").innerHTML = importedOrders.slice(0,15).map(o=>{
+    const items = o.items.map(i=>i.name+(i.qty>1?`×${i.qty}`:"")).join("、");
+    return `<div class="orderRow">
+      <div><span class="ostore">${esc(o.store||"未知门店")}</span><span class="otime">${esc(o.time||"")}</span></div>
+      <div class="oitems">${esc(items)}</div>
+    </div>`;
+  }).join("");
 }
 function feedFromPantry(name){
   if(!pantry[name] || pantry[name]<=0) return;
@@ -704,7 +790,7 @@ async function simulateOrder(){
   render();
   const names = kept.map(f=>f.name+(f.qty>1?`×${f.qty}`:"")).join("、");
   // 强反馈：卡片内横幅 + 精灵抖动 + 向上漂浮
-  showBanner(`🧾 在「${order.storeName}」点单成功：${names}（+${n} 份已入库）`);
+  showBanner(`🧾 模拟下单成功：${names}（+${n} 份已入库）`);
   bounceSpirit();
   fxExp(`🍱 +${n} 份食物`);
   // 首次点单：自动滚动到食物库存，让玩家看到食物去哪了
@@ -734,7 +820,7 @@ function buildGallery(){
       const tierName = t==="2"?"成形":(t==="3"?"完全体":"变异体");
       cells += `<div class="cell" data-key="${lin}-${t}" data-slugs="${[...usedSlug].join(",")}">
         <span class="check" style="display:none">✓</span>
-        <img src="../../assets/spirits/${f.slug}.png" alt="${f.name}" loading="lazy">
+        <img src="assets/spirits/${f.slug}.sm.webp" alt="${f.name}" loading="lazy" decoding="async">
         <div class="cname">${f.name}</div>
         <div class="tier">${tierName}${lin==="鱼"?' · 唯一':''}</div>
       </div>`;
@@ -754,7 +840,21 @@ function renderGalleryStates(){
   });
 }
 
-/* ---- 3D 手办柜 ---- */
+/* ---- 3D 手办柜（model-viewer 组件延迟到进入视口才加载——首屏省 913KB） ---- */
+let mvPromise = null;
+function ensureModelViewer(){
+  if(customElements.get("model-viewer")) return Promise.resolve(true);
+  if(mvPromise) return mvPromise;
+  mvPromise = new Promise(res=>{
+    const s = document.createElement("script");
+    s.type = "module";
+    s.src = "../../assets/3d/model-viewer.min.js";
+    s.onload = ()=>res(true);
+    s.onerror = ()=>{ mvPromise = null; res(false); };
+    document.head.appendChild(s);
+  });
+  return mvPromise;
+}
 function init3d(){
   models3d = [
     ["beef_double_cheese","牛系·芝士牛堡"],
@@ -774,18 +874,24 @@ function init3d(){
     });
     tabs.appendChild(b);
   });
-  // 进入视口后再加载第一个
-  const io = new IntersectionObserver((es)=>{
-    if(es.some(e=>e.isIntersecting)){ io.disconnect(); load3d(models3d[0][0]); }
+  // 进入视口后再加载组件与第一个手办
+  const io = new IntersectionObserver(async (es)=>{
+    if(!es.some(e=>e.isIntersecting)) return;
+    io.disconnect();
+    await ensureModelViewer();
+    load3d(models3d[0][0]);
   },{threshold:.2});
   io.observe($("mv"));
 }
 function load3d(slug){
-  const mv = $("mv");
-  const src = `../../assets/3d/${slug}.glb`;
-  if(mv.getAttribute("src")===src) return;
-  mv.setAttribute("src", src);
-  mv.setAttribute("alt", `3D 手办 ${slug}`);
+  ensureModelViewer().then(ok=>{
+    if(!ok) return;
+    const mv = $("mv");
+    const src = `../../assets/3d/${slug}.glb`;
+    if(mv.getAttribute("src")===src) return;
+    mv.setAttribute("src", src);
+    mv.setAttribute("alt", `3D 手办 ${slug}`);
+  });
 }
 
 /* ---- 分享名片 ---- */
@@ -866,6 +972,64 @@ function downloadCard(cv){
   }, "image/png");
 }
 
+/* ---- 导入账号数据 ---- */
+function openImport(){ $("importModal").style.display = "flex"; }
+function closeImport(){ $("importModal").style.display = "none"; }
+function applyImport(normalized){
+  const known = new Set(importedIds);
+  let addedOrders = 0, addedFoods = 0, dup = 0;
+  const addedStores = new Set();
+  for(const o of normalized.orders){
+    const key = o.orderId || `${o.time}|${o.store}|${o.items.map(i=>i.name+"x"+i.qty).join(",")}`;
+    if(known.has(key)){ dup++; continue; }
+    known.add(key);
+    importedIds.push(key);
+    importedOrders.unshift({id:key, store:o.store, time:o.time, items:o.items});
+    addedOrders++;
+    if(o.store) addedStores.add(o.store);
+    for(const it of o.items){
+      // 饮料/配菜类：无感，不占库存（与模拟订单同一规则）
+      if(it.name.includes("可乐")||it.name.includes("汽水")||it.name.includes("牛奶")||it.name.includes("玉米")) continue;
+      pantry[it.name] = (pantry[it.name]||0) + it.qty;
+      addedFoods += it.qty;
+    }
+  }
+  if(importedOrders.length > 60) importedOrders = importedOrders.slice(0,60);
+  if(importedIds.length > 400) importedIds = importedIds.slice(-400);
+  saveState(); render();
+  return {addedOrders, addedFoods, dup, addedStores};
+}
+function doImport(text){
+  let normalized;
+  try{
+    normalized = McPetImport.normalize(text);
+  }catch(e){
+    toast("❌ 解析失败：" + ((e && e.message) || "未知错误"));
+    return;
+  }
+  if(!normalized.orders.length){
+    toast("没有找到可导入的已完成订单" + (normalized.skipped ? `（跳过 ${normalized.skipped} 条无效）` : ""));
+    return;
+  }
+  const r = applyImport(normalized);
+  let msg = `📥 已导入 ${r.addedOrders} 单`;
+  if(r.addedStores.size) msg += `（来自 ${r.addedStores.size} 家门店）`;
+  msg += ` · 入库 ${r.addedFoods} 份食物`;
+  if(r.dup) msg += ` · 跳过重复 ${r.dup} 单`;
+  if(!r.addedOrders) msg = `📥 这些订单之前已经导入过了（跳过重复 ${r.dup} 单，不重复给食物）`;
+  showBanner(msg);
+  closeImport();
+  $("pasteArea").value = ""; $("fileInput").value = "";
+  // 滚到订单记录，让玩家看到"门店版"的订单去哪了
+  if(r.addedOrders) setTimeout(()=>{ $("ordersCard").scrollIntoView({behavior:"smooth", block:"center"}); }, 750);
+}
+function readImportFile(f){
+  const reader = new FileReader();
+  reader.onload = ()=>doImport(String(reader.result||""));
+  reader.onerror = ()=>toast("❌ 文件读取失败");
+  reader.readAsText(f);
+}
+
 /* ---- 交互绑定 ---- */
 function bind(){
   $("btnHatch").addEventListener("click", ()=>{
@@ -893,23 +1057,45 @@ function bind(){
     }
   });
   // 重新开始：不用原生 confirm（在嵌入预览/沙箱环境会被拦截而静默失效），改为"双击确认"
+  const RESET_LABEL = "↺ 重新开始（换一只养）";
   let resetArmed = false, resetTimer = null;
   $("btnReset").addEventListener("click", ()=>{
     const btn = $("btnReset");
     if(!resetArmed){
       resetArmed = true;
-      btn.textContent = "⚠️ 再点一次清空";
+      btn.textContent = "⚠️ 再点一次清空（含导入记录）";
       btn.style.color = "#ff9d90";
-      resetTimer = setTimeout(()=>{ resetArmed=false; btn.textContent="重新开始"; btn.style.color=""; }, 3200);
+      resetTimer = setTimeout(()=>{ resetArmed=false; btn.textContent=RESET_LABEL; btn.style.color=""; }, 3200);
       return;
     }
     clearTimeout(resetTimer); resetArmed = false;
-    btn.textContent = "重新开始"; btn.style.color = "";
-    state = null; pantry = {}; seen = {};
+    btn.textContent = RESET_LABEL; btn.style.color = "";
+    state = null; pantry = {}; seen = {}; importedOrders = []; importedIds = [];
     saveState(); render();
     $("spiritSlot").innerHTML = "";
     window.scrollTo({top:0, behavior:"smooth"});
     showBanner("🧹 已清空——可以重新孵化一只新精灵了！");
+  });
+  // 导入账号数据
+  $("btnImport").addEventListener("click", ()=>openImport());
+  $("modalMask").addEventListener("click", closeImport);
+  $("modalX").addEventListener("click", closeImport);
+  const dz = $("dropzone");
+  dz.addEventListener("click", ()=>$("fileInput").click());
+  $("fileInput").addEventListener("change", e=>{
+    const f = e.target.files && e.target.files[0];
+    if(f) readImportFile(f);
+  });
+  ["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); dz.classList.add("over");}));
+  ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); dz.classList.remove("over");}));
+  dz.addEventListener("drop", e=>{
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) readImportFile(f);
+  });
+  $("btnDoImport").addEventListener("click", ()=>{
+    const t = ($("pasteArea").value||"").trim();
+    if(!t){ toast("先选择文件，或把导出内容粘贴到上面"); return; }
+    doImport(t);
   });
   $("btnShare").addEventListener("click", ()=>{
     if(!state){ toast("先孵化一只精灵再生成名片哟"); return; }

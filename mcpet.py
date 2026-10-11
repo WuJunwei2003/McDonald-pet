@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""麦麦精灵 CLI —— 孵化 / 同步订单 / 喂养（库存制）/ 状态 / 形象
+"""麦麦精灵 CLI —— 孵化 / 同步订单 / 喂养（库存制）/ 状态 / 形象 / 导出
 
 数据流：同步订单 → 食物入库（薯条×3、巨无霸×1）→ 从库存喂给精灵
 
@@ -7,6 +7,7 @@
     python mcpet.py hatch                      # 孵化一颗蛋
     python mcpet.py sync                       # 同步真实订单 → 食物入库（需 MCP Token）
     python mcpet.py simulate                   # 用模拟订单入库（无需 Token，体验用）
+    python mcpet.py export                     # 导出真实订单为 JSON（导入到在线试玩页）
     python mcpet.py pantry                     # 查看食物库存
     python mcpet.py feed "薯条"                 # 从库存喂一份
     python mcpet.py status                     # 查看精灵状态
@@ -19,6 +20,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "src"))
@@ -131,6 +133,65 @@ def cmd_simulate(args) -> int:
         raw = json.load(f)
     orders = parse_order_list(raw)
     return _import_orders(args, orders, "🎲 模拟订单入库")
+
+
+def cmd_export(args) -> int:
+    """导出真实订单为 JSON 文件（供在线试玩页「导入账号数据」使用）"""
+    try:
+        from mcp_client import McdClient, McdError
+    except ImportError as e:
+        print(f"加载 MCP 客户端失败：{e}")
+        return 1
+    try:
+        client = McdClient()
+    except McdError as e:
+        print(f"⚠️  {e}")
+        print("   设置环境变量 MCD_MCP_TOKEN（或在 mcpet 目录放 .mcpet.token）后重试。")
+        return 1
+
+    print("🔄 正在拉取真实订单…")
+    try:
+        raw = client.order_list()
+    except McdError as e:
+        print(f"⚠️  订单查询失败：{e}")
+        return 1
+    text = client.extract_text(raw) or ""
+    data = extract_json(text)
+    if not data:
+        print("⚠️  未能从返回中解析出订单 JSON（接口格式可能变化）")
+        return 1
+    orders = parse_order_list(data)[: args.limit]
+    if not orders:
+        print("📭 没有找到已完成的订单。")
+        return 1
+
+    # 展平套餐子项（与试玩页导入解析器同一结构）
+    out = []
+    for o in orders:
+        items = []
+        for it in o["items"]:
+            if it.get("parts"):
+                for p in it["parts"]:
+                    items.append({"name": p["name"], "qty": p["quantity"]})
+            elif it.get("name"):
+                items.append({"name": it["name"], "qty": it["quantity"]})
+        out.append({"orderId": o["orderId"], "store": o["storeName"],
+                    "time": o["createTime"], "items": items})
+
+    payload = {
+        "type": "mcpet-export",
+        "version": 1,
+        "exportedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "orders": out,
+    }
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    stores = sorted({o["store"] for o in out if o["store"]})
+    print(f"✅ 已导出 {len(out)} 单（{len(stores)} 家门店）→ {args.out}")
+    for s in stores[:5]:
+        print(f"   · {s}")
+    print("   下一步：打开在线试玩页 →「📥 导入账号数据」→ 上传这个文件")
+    return 0
 
 
 def cmd_pantry(args) -> int:
@@ -260,6 +321,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("simulate", help="模拟订单入库（无需 Token）")
     p.set_defaults(func=cmd_simulate)
+
+    p = sub.add_parser("export", help="导出真实订单为 JSON（导入到在线试玩页喂养）")
+    p.add_argument("--out", default="mcpet-orders.json", help="输出文件名")
+    p.add_argument("--limit", type=int, default=50, help="最多导出前 N 单")
+    p.set_defaults(func=cmd_export)
 
     p = sub.add_parser("pantry", help="查看食物库存")
     p.set_defaults(func=cmd_pantry)

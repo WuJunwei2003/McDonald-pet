@@ -31,6 +31,14 @@
 
 打开 **https://wujunwei2003.github.io/McDonald-pet/** —— 零安装，浏览器里直接孵化/喂养/看进化（模拟订单模式）。
 
+**想用你自己的真实订单喂？** 试玩页是纯静态页面（出于安全无法直连麦当劳服务器），两步即可：
+
+```bash
+python mcpet.py export     # 拉取你账号的历史订单 → mcpet-orders.json（也可用独立脚本：docs/demo/export_orders.py）
+```
+
+然后在试玩页点「📥 导入账号数据」上传该文件（或直接粘贴内容）——门店版订单记录与食物库存即刻到账（数据只存浏览器本地，重复导入自动去重）。
+
 ### 网页版（完整版，本机运行）
 
 ```bash
@@ -140,13 +148,19 @@ mcpet/
 ├── index.html               # GitHub Pages 入口（跳转到在线试玩页）
 ├── docs/
 │   ├── demo/                # 🎮 在线试玩页（静态版，零安装打开即玩）
+│   │   ├── index.html       #   试玩页主体（含「导入账号数据」）
+│   │   ├── dye.js           #   异色染色引擎（浏览器 + Node 两用）
+│   │   ├── import.js        #   账号数据导入解析器（三种格式，含测试）
+│   │   ├── export_orders.py #   独立导出脚本（单文件零依赖，给试玩者用）
+│   │   ├── sample-orders.json  # 示例导入文件
+│   │   └── assets/spirits/  #   试玩页专用 WebP 素材（512 + 128 缩略图）
 │   └── screenshots/         # 界面截图
 ├── skill/
 │   └── SKILL.md             # WorkBuddy Skill 封装（对话式养精灵）
 ├── app.py                   # 网页版入口（本地服务 + MCP 转发 + 静态资源）
 ├── web/
 │   └── index.html           # 网页界面（零框架单页，含立体舞台与 3D 手办柜）
-├── mcpet.py                 # CLI 入口（孵化/喂养/状态/形象/同步）
+├── mcpet.py                 # CLI 入口（孵化/同步/导出/喂养/状态/形象）
 ├── src/
 │   ├── spirit_gen.py        # 参数化 SVG 生成器（兜底形态，零素材可用）
 │   ├── feeding.py           # 喂养引擎（纯逻辑，可测试）
@@ -164,7 +178,9 @@ mcpet/
 ├── tools/                   # 构建期工具（需要 Pillow，不影响运行时零依赖）
 │   ├── prepare_spirits.py   # 抠图 → 透明 PNG → 归一化 512²（含 QA 对照图）
 │   ├── gen3d.py             # 图生 3D（直调云端，进程内传图绕过命令行长度限制）
-│   └── compress_glb.py      # GLB 轻量化（贴图降采样 + JPEG，37MB → 5MB）
+│   ├── compress_glb.py      # GLB 轻量化（贴图降采样 + JPEG，37MB → 5MB）
+│   ├── make_demo_assets.py  # 试玩页素材优化（PNG → WebP + 缩略图，5.1MB → 0.85MB）
+│   └── test_dye.mjs / test_import.mjs  # 染色与导入逻辑测试（Node，26 项）
 └── tests/                   # 单元测试（35 项：养成 14 + 订单 9 + 库存 7 + 形态 5）
 ```
 
