@@ -774,12 +774,24 @@ function bind(){
       btn.textContent = old; btn.disabled = false;
     }
   });
+  // 重新开始：不用原生 confirm（在嵌入预览/沙箱环境会被拦截而静默失效），改为"双击确认"
+  let resetArmed = false, resetTimer = null;
   $("btnReset").addEventListener("click", ()=>{
-    if(confirm("重新开始会丢掉当前精灵，确定吗？")){
-      state=null; pantry={}; seen={};
-      saveState(); render();
-      $("spiritSlot").innerHTML="";
+    const btn = $("btnReset");
+    if(!resetArmed){
+      resetArmed = true;
+      btn.textContent = "⚠️ 再点一次清空";
+      btn.style.color = "#ff9d90";
+      resetTimer = setTimeout(()=>{ resetArmed=false; btn.textContent="重新开始"; btn.style.color=""; }, 3200);
+      return;
     }
+    clearTimeout(resetTimer); resetArmed = false;
+    btn.textContent = "重新开始"; btn.style.color = "";
+    state = null; pantry = {}; seen = {};
+    saveState(); render();
+    $("spiritSlot").innerHTML = "";
+    window.scrollTo({top:0, behavior:"smooth"});
+    showBanner("🧹 已清空——可以重新孵化一只新精灵了！");
   });
   $("btnShare").addEventListener("click", ()=>{
     if(!state){ toast("先孵化一只精灵再生成名片哟"); return; }
