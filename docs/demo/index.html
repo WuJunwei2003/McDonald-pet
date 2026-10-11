@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>麦麦精灵 McPet · 在线试玩</title>
+<meta name="description" content="养一只吃麦当劳订单长大的麦麦精灵：喂什么变什么，六系分支进化，还能喂出稀有变异体。零安装，打开即玩。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍟</text></svg>">
+<style>
+  :root{
+    --bg:#0e0d0c; --card:#1a1817; --card2:#211e1c; --line:#2e2a27;
+    --txt:#f3efe9; --dim:#a49c92; --faint:#6f675e;
+    --red:#e04b3a; --yellow:#ffc72c; --green:#68b47a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+  body{padding-bottom:40px}
+  a{color:inherit}
+  #app{max-width:640px; margin:0 auto; padding:14px 14px 30px}
+
+  /* header */
+  header{display:flex; align-items:center; justify-content:space-between; padding:6px 2px 10px}
+  .brand{font-size:19px; font-weight:800; letter-spacing:.5px}
+  .brand b{color:var(--yellow)}
+  .demoBadge{display:inline-block; margin-left:6px; padding:2px 8px; border-radius:99px;
+    background:rgba(224,75,58,.16); color:#ff9d90; border:1px solid rgba(224,75,58,.4);
+    font-size:11px; font-weight:600; vertical-align:2px}
+  .starBtn{text-decoration:none; background:var(--card); border:1px solid var(--line);
+    padding:7px 12px; border-radius:99px; font-size:13px; font-weight:700; color:var(--yellow)}
+  .notice{font-size:12px; color:var(--dim); background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:8px 12px; margin-bottom:12px; line-height:1.5}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:16px; margin-bottom:14px}
+  .card h3{margin:0 0 12px; font-size:15px; color:var(--txt)}
+  .card h3 small{color:var(--faint); font-weight:400}
+
+  /* stage */
+  .stageCard{text-align:center; position:relative; overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 0%, #262120 0%, var(--card) 60%)}
+  .spiritBox{height:220px; display:flex; align-items:center; justify-content:center; position:relative}
+  .spiritBox .halo{position:absolute; width:170px; height:170px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,199,44,.18) 0%, transparent 65%); filter:blur(6px)}
+  .spiritImg{width:190px; height:190px; object-fit:contain; position:relative; z-index:2;
+    animation:float 3.2s ease-in-out infinite; filter:drop-shadow(0 14px 18px rgba(0,0,0,.45))}
+  .blobWrap{position:relative; z-index:2; animation:float 3.2s ease-in-out infinite}
+  .blobWrap svg{width:180px; height:180px; filter:drop-shadow(0 14px 18px rgba(0,0,0,.45))}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  .bounce{animation:bounce .5s ease}
+  @keyframes bounce{0%{transform:scale(1)}35%{transform:scale(1.14,.9)}70%{transform:scale(.96,1.05)}100%{transform:scale(1)}}
+  .spiritBox .fxlayer{position:absolute; inset:0; pointer-events:none; z-index:3}
+  .fxexp{position:absolute; left:50%; top:42%; transform:translateX(-50%);
+    color:var(--yellow); font-weight:800; font-size:20px; opacity:0; white-space:nowrap;
+    text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .fxexp.go{animation:fxup 1s ease forwards}
+  @keyframes fxup{0%{opacity:0; transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0; transform:translate(-50%,-46px)}}
+  .spark{position:absolute; font-size:16px; opacity:0}
+  .spark.go{animation:sparkle 1.1s ease forwards}
+  @keyframes sparkle{0%{opacity:0; transform:translateY(8px) scale(.6)}30%{opacity:1}100%{opacity:0; transform:translateY(-34px) scale(1.15)}}
+
+  .nameRow{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:2px}
+  .spiritName{font-size:20px; font-weight:800}
+  .lineageTag{font-size:12px; padding:2px 10px; border-radius:99px; border:1px solid var(--line);
+    background:var(--card2); color:var(--dim)}
+  .lineageTag.rare{color:#9ec8ff; border-color:rgba(133,183,235,.45)}
+  .stageSub{font-size:12px; color:var(--faint); margin-top:4px}
+  .msgBanner{margin:10px auto 0; max-width:480px; font-size:13px; line-height:1.55; color:var(--yellow);
+    background:rgba(255,199,44,.09); border:1px solid rgba(255,199,44,.28); border-radius:12px;
+    padding:8px 12px; display:none}
+  .msgBanner.show{display:block; animation:pop .35s ease}
+  @keyframes pop{0%{transform:scale(.92); opacity:0}100%{transform:scale(1); opacity:1}}
+
+  .expWrap{margin:14px 6px 4px}
+  .expBar{height:12px; border-radius:99px; background:#131211; overflow:hidden; border:1px solid var(--line)}
+  .expFill{height:100%; width:0%; border-radius:99px; transition:width .5s ease;
+    background:linear-gradient(90deg, #e04b3a, #ffc72c)}
+  .expTxt{display:flex; justify-content:space-between; font-size:12px; color:var(--dim); margin-top:5px}
+  .tip{font-size:12.5px; color:var(--dim); margin-top:8px; min-height:18px; line-height:1.5}
+
+  .actions{display:flex; gap:10px; margin-top:14px}
+  .btn{flex:1; border:none; border-radius:14px; padding:13px 10px; font-size:15px; font-weight:800;
+    cursor:pointer; font-family:inherit}
+  .btnOrder{background:linear-gradient(135deg,#e04b3a,#c83828); color:#fff;
+    box-shadow:0 6px 18px rgba(224,75,58,.35)}
+  .btnOrder:active{transform:translateY(1px)}
+  .btnGhost{background:var(--card2); color:var(--dim); border:1px solid var(--line); flex:0 0 108px}
+
+  /* hatch */
+  .hatchBox{padding:8px 0 4px}
+  .hatchBox .egg{font-size:74px; line-height:1; animation:float 3s ease-in-out infinite; display:inline-block}
+  .hatchRow{display:flex; gap:10px; margin-top:16px; justify-content:center}
+  .hatchRow input{flex:1; max-width:220px; background:var(--card2); border:1px solid var(--line);
+    border-radius:12px; color:var(--txt); padding:12px 14px; font-size:15px; font-family:inherit; outline:none}
+  .hatchRow input:focus{border-color:var(--yellow)}
+  .btnHatch{background:linear-gradient(135deg,#ffc72c,#f0a60a); color:#2a1f00; border:none;
+    border-radius:12px; padding:12px 26px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit}
+
+  /* pantry */
+  .pantryHead{display:flex; justify-content:space-between; align-items:baseline}
+  .pantryGrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:9px}
+  .foodItem{background:var(--card2); border:1px solid var(--line); border-radius:14px;
+    padding:9px 8px 8px; text-align:center; cursor:pointer; transition:transform .12s ease, border-color .12s;
+    position:relative; user-select:none}
+  .foodItem:hover{border-color:#4a443e}
+  .foodItem:active{transform:scale(.94)}
+  .foodItem img{width:46px; height:46px; object-fit:contain; display:block; margin:0 auto 4px}
+  .foodItem .fname{font-size:11px; color:var(--txt); line-height:1.25; word-break:break-all}
+  .foodItem .qty{position:absolute; top:6px; right:6px; background:var(--red); color:#fff;
+    font-size:10.5px; font-weight:800; min-width:18px; height:18px; line-height:18px; border-radius:99px; padding:0 5px}
+  .foodItem .dot{position:absolute; top:6px; left:6px; width:8px; height:8px; border-radius:50%}
+  .empty{color:var(--faint); font-size:13px; padding:16px 0; text-align:center}
+
+  /* gallery */
+  .lineRow{margin-bottom:12px}
+  .lineName{font-size:13px; font-weight:700; margin-bottom:6px; color:var(--dim)}
+  .lineName .rare{color:#9ec8ff; font-weight:400; font-size:11px; margin-left:6px}
+  .cells{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+  .cell{flex:0 0 96px; background:var(--card2); border:1px solid var(--line); border-radius:12px;
+    padding:7px 6px 6px; text-align:center; position:relative; opacity:.45; filter:saturate(.35)}
+  .cell.on{opacity:1; filter:none; border-color:rgba(255,199,44,.55)}
+  .cell img{width:52px; height:52px; object-fit:contain; display:block; margin:0 auto 3px}
+  .cell .cname{font-size:10.5px; color:var(--dim); line-height:1.25; word-break:break-all}
+  .cell .tier{font-size:9.5px; color:var(--faint)}
+  .cell .check{position:absolute; top:4px; right:5px; font-size:11px; color:var(--yellow)}
+
+  /* 3d */
+  .tabs3d{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px}
+  .tab3d{border:1px solid var(--line); background:var(--card2); color:var(--dim); border-radius:99px;
+    padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit}
+  .tab3d.active{background:rgba(255,199,44,.14); color:var(--yellow); border-color:rgba(255,199,44,.5)}
+  .viewerBox{height:320px; border-radius:14px; overflow:hidden; background:#141312; border:1px solid var(--line)}
+  model-viewer{width:100%; height:100%; --poster-color:transparent; background:transparent}
+
+  /* share + footer */
+  .shareWrap{text-align:center}
+  .btnShare{background:linear-gradient(135deg,#8a6cf0,#6a4de0); color:#fff; border:none;
+    border-radius:14px; padding:13px 30px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit}
+  footer{margin-top:20px; text-align:center}
+  .ctaStar{display:block; text-decoration:none; background:linear-gradient(135deg,#ffc72c,#f0a60a);
+    color:#2a1f00; border-radius:16px; padding:16px; font-size:16px; font-weight:800; margin-bottom:10px}
+  .ctaSub{font-size:12px; color:var(--dim); line-height:1.7}
+  .ctaSub b{color:var(--txt)}
+
+  /* toast */
+  #toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(80px);
+    background:#2a2624; border:1px solid #3a3531; color:var(--txt); font-size:13px; line-height:1.5;
+    border-radius:14px; padding:11px 16px; max-width:88vw; box-shadow:0 12px 30px rgba(0,0,0,.5);
+    transition:transform .3s ease; z-index:50; pointer-events:none}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #toast b{color:var(--yellow)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">🍟 麦麦精灵 <b>McPet</b><span class="demoBadge">在线试玩</span></div>
+    <a class="starBtn" href="https://github.com/WuJunwei2003/McDonald-pet" target="_blank" rel="noopener">⭐ Star</a>
+  </header>
+
+  <div class="notice">试玩版使用<b>模拟订单</b>数据，零安装开箱即玩；<b>完整版</b>可同步你真实的麦当劳订单、解锁全部形态与 3D 手办（见文末 GitHub）。</div>
+
+  <!-- 精灵舞台 -->
+  <section class="card stageCard" id="stageCard">
+    <div class="spiritBox">
+      <div class="halo"></div>
+      <div id="spiritSlot"></div>
+      <div class="fxlayer" id="fxlayer"></div>
+    </div>
+    <div class="nameRow">
+      <span class="spiritName" id="spiritName">…</span>
+      <span class="lineageTag" id="lineageTag" style="display:none"></span>
+    </div>
+    <div class="stageSub" id="stageSub"></div>
+    <div class="msgBanner" id="msgBanner"></div>
+    <div class="expWrap" id="expWrap" style="display:none">
+      <div class="expBar"><div class="expFill" id="expFill"></div></div>
+      <div class="expTxt"><span id="expNow">0</span><span id="expNext"></span></div>
+    </div>
+    <div class="tip" id="tip"></div>
+    <div class="actions" id="actions" style="display:none">
+      <button class="btn btnOrder" id="btnOrder">🎲 模拟点一单</button>
+      <button class="btn btnGhost" id="btnReset">重新开始</button>
+    </div>
+    <div class="hatchBox" id="hatchBox">
+      <div class="egg">🥚</div>
+      <div style="color:var(--dim); font-size:13.5px; margin-top:10px">领养一只麦麦精灵——它吃你喂的麦当劳长大，<b style="color:var(--txt)">喂什么变什么</b>。</div>
+      <div class="hatchRow">
+        <input id="hatchName" maxlength="8" placeholder="给它起个名字（可选）">
+        <button class="btnHatch" id="btnHatch">孵化</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 食物库存 -->
+  <section class="card" id="pantryCard" style="display:none">
+    <div class="pantryHead"><h3>🍱 食物库存 <small>点一下 = 喂一口</small></h3><span id="pantryCount" style="font-size:12px;color:var(--faint)"></span></div>
+    <div class="pantryGrid" id="pantryGrid"></div>
+    <div class="empty" id="pantryEmpty">还没有食物 —— 先去上面「模拟点一单」</div>
+  </section>
+
+  <!-- 六系进化谱 -->
+  <section class="card">
+    <h3>六系进化谱 <small>（喂什么变什么 · 点亮你收集到的形态）</small></h3>
+    <div id="gallery"></div>
+  </section>
+
+  <!-- 3D 手办柜 -->
+  <section class="card">
+    <h3>🔮 3D 手办柜 <small>（拖动旋转 / 滚轮缩放 · 完整版含六系）</small></h3>
+    <div class="tabs3d" id="tabs3d"></div>
+    <div class="viewerBox"><model-viewer id="mv" camera-controls auto-rotate rotation-per-second="22deg" interaction-prompt="none" alt="3D 手办"></model-viewer></div>
+  </section>
+
+  <!-- 分享 -->
+  <section class="card shareWrap">
+    <button class="btnShare" id="btnShare">📸 生成我的精灵名片</button>
+    <div style="font-size:11.5px; color:var(--faint); margin-top:8px">生成图片保存/分享（含你的精灵形象与养成数据）</div>
+  </section>
+
+  <footer>
+    <a class="ctaStar" href="https://github.com/WuJunwei2003/McDonald-pet" target="_blank" rel="noopener">⭐ 去 GitHub 点个 Star 支持我</a>
+    <div class="ctaSub">
+      <b>完整版功能</b>：同步真实麦当劳订单 · 六系 18 形态全收集 · 变异体 · 六系 3D 手办柜 · WorkBuddy 对话式养精灵<br>
+      github.com/WuJunwei2003/McDonald-pet
+    </div>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="../../assets/3d/model-viewer.min.js"></script>
+<script>
+"use strict";
+/* ========= 常量与工具 ========= */
+const BASE_EXP = 10;
+const T2 = 30, T3 = 80, HETERO_LIMIT = 20;
+const REPO = "https://github.com/WuJunwei2003/McDonald-pet";
+const KEY = "mcpet_demo_v1";
+
+const EVOLVE_LINES = {
+  "薯":"🍟 一份薯条的灵魂注入了它的身体——金薯灵诞生！",
+  "牛":"🐂 牛肉的力量崛起了——小牛堡诞生！",
+  "鸡":"🐔 它长出了第一撮鸡冠——咕咕鸡诞生！",
+  "鱼":"🐟 稀有！深海的气息……鱼板仔诞生（菜单里鱼类最少，这个系很稀有）！",
+  "咖":"☕ 香气混合着它的呼吸——咖啡豆豆诞生！",
+  "甜":"🍦 甜甜的奶油在头顶融化——奶油团诞生！"
+};
+const STAGE_LABEL = {1:"幼体",2:"成形",3:"完全体",4:"变异体"};
+const LINE_COLOR = {"薯":"#F5A742","牛":"#D85A30","鸡":"#F0E3C8","鱼":"#85B7EB","咖":"#9A6B44","甜":"#ED93B1"};
+
+const $ = id => document.getElementById(id);
+const r1 = x => Math.round(x*10)/10;
+
+let CFG = null;          // {keywords, forms}
+let state = null;        // 游戏状态
+let seen = {};           // 收集记录 {"薯-2":true}
+let pantry = {};         // {name: qty}
+let models3d = [];       // [[slug,label],...]
+
+/* ========= 加载配置 ========= */
+async function boot(){
+  const [lineage, forms] = await Promise.all([
+    fetch("../../data/lineage.json").then(r=>r.json()),
+    fetch("../../data/forms.json").then(r=>r.json()),
+  ]);
+  CFG = {keywords: lineage.keywords, lineageMeta: lineage.lineages, forms: forms.lineages, foodIcons: forms.food_icons};
+  loadState();
+  buildGallery();
+  init3d();
+  render();
+  bind();
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      state = d.state || null; seen = d.seen || {}; pantry = d.pantry || {};
+    }
+  }catch(e){ /* ignore */ }
+}
+function saveState(){
+  try{ localStorage.setItem(KEY, JSON.stringify({state, seen, pantry})); }catch(e){}
+}
+
+/* ========= 养成引擎（与 Python 版同规则） ========= */
+function classify(meal){
+  for(const [lin, kws] of Object.entries(CFG.keywords)){
+    for(const kw of kws){ if(meal && meal.includes(kw)) return lin; }
+  }
+  return null;
+}
+function stageOf(){
+  if(!state) return 0;
+  if(state.variant) return 4;
+  if(state.total_exp >= T3) return 3;
+  if(state.total_exp >= T2) return 2;
+  return 1;
+}
+function topLineage(){
+  const le = state.lineage_exp || {};
+  let best=null, bv=-1;
+  for(const [k,v] of Object.entries(le)){ if(v>bv){bv=v;best=k;} }
+  return best;
+}
+function feed(meal){
+  const lin = classify(meal);
+  let gained, kind = "neutral";
+  if(!state.lineage){
+    if(lin===null){ gained = BASE_EXP*0.4; }
+    else { gained = BASE_EXP; state.lineage_exp[lin]=(state.lineage_exp[lin]||0)+gained; kind="save"; }
+  }else{
+    if(lin === state.lineage){ gained = BASE_EXP*1.5; kind="same"; }
+    else { gained = BASE_EXP*0.5; kind="cross"; if(lin){ state.hetero[lin]=(state.hetero[lin]||0)+gained; } }
+  }
+  const before = stageOf();
+  state.total_exp = r1(state.total_exp + gained);
+  state.feed_count += 1;
+  state.fed_meals.unshift(meal); state.fed_meals = state.fed_meals.slice(0,20);
+
+  let msg = "";
+  const after0 = stageOf();
+  if(!state.lineage && after0 >= 2){
+    state.lineage = topLineage();
+    msg = EVOLVE_LINES[state.lineage] || "它成形了！";
+  }else if(after0 !== before && after0 === 3){
+    msg = "🎉 它长成了完全体！已经是一只成熟的麦麦精灵了。";
+  }else if(!state.lineage){
+    msg = kind==="save" ? "它把这份食物的力量悄悄记下了……" : "它吃下去了，似乎没什么特别的感觉。";
+  }else if(kind==="same"){
+    msg = "（本命系加成 ×1.5）它吃得特别香。";
+  }else if(kind==="cross"){
+    msg = `（异系 ×0.5，异系值 +${gained}）它有点疑惑，但还是吃下去了……`;
+  }else{
+    msg = "它吃下去了，似乎没什么特别的感觉。";
+  }
+
+  // 变异检查
+  if(state.lineage && !state.variant){
+    const hmax = Math.max(0, ...Object.values(state.hetero));
+    if(hmax >= HETERO_LIMIT){
+      state.variant = true;
+      msg = "⚡ 异系能量满溢……它突破了形态，变成了变异体！";
+    }
+  }
+  unlockSeen();
+  saveState();
+  return {gained, msg, kind};
+}
+function formFor(){
+  const s = stageOf();
+  if(s<=1 || !state.lineage) return null;
+  const tier = s===4 ? "4" : (s===3 ? "3" : "2");
+  const f = CFG.forms[state.lineage] && CFG.forms[state.lineage][tier];
+  return f ? f : null;
+}
+function unlockSeen(){
+  const s = stageOf();
+  if(s>=2 && state.lineage){
+    const tier = s===4 ? 4 : (s===3 ? 3 : 2);
+    for(let t=2; t<=tier; t++){ seen[`${state.lineage}-${t}`] = true; }
+  }
+}
+function foodIcon(meal){
+  for(const [kw, slug] of CFG.foodIcons){
+    if(meal && meal.includes(kw)) return `../../assets/spirits/${slug}.png`;
+  }
+  return null;
+}
+
+/* ========= 渲染 ========= */
+function render(){
+  const hasSpirit = !!state;
+  $("hatchBox").style.display = hasSpirit ? "none" : "block";
+  $("actions").style.display = hasSpirit ? "flex" : "none";
+  $("pantryCard").style.display = hasSpirit ? "block" : "none";
+  $("expWrap").style.display = hasSpirit ? "block" : "none";
+
+  if(!hasSpirit){
+    $("spiritSlot").innerHTML = "";
+    $("spiritName").textContent = "？";
+    $("stageSub").textContent = "";
+    $("lineageTag").style.display = "none";
+    $("tip").textContent = "给它起个名字，点「孵化」开始 ↓";
+    return;
+  }
+
+  const s = stageOf();
+  const form = formFor();
+  $("spiritName").textContent = state.name;
+
+  // 形象
+  const slot = $("spiritSlot");
+  if(form){
+    if(!slot.querySelector("img.spiritImg")){
+      slot.innerHTML = `<img class="spiritImg" id="spiritImg" alt="${state.name}">`;
+    }
+    const img = slot.querySelector("img");
+    const src = `../../assets/spirits/${form.slug}.png`;
+    if(img.getAttribute("src") !== src){ img.src = src; }
+  }else{
+    // 幼体：中性/倾向色小团子
+    const hint = topLineage();
+    const color = hint ? LINE_COLOR[hint] : "#BFB8AC";
+    slot.innerHTML = `<div class="blobWrap" id="blob">${blobSVG(color)}</div>`;
+  }
+
+  // 系别标签
+  const lm = CFG.lineageMeta[state.lineage];
+  const tag = $("lineageTag");
+  if(lm){
+    tag.style.display = "";
+    tag.textContent = `${lm.name}${state.variant ? " · 变异体" : ""}`;
+    tag.className = "lineageTag" + (lm.rarity === "rare" ? " rare" : "");
+  }else{
+    tag.style.display = "none";
+  }
+  const sub = [`第 ${state.feed_count} 次投喂`];
+  if(form) sub.push(form.name);
+  if(state.variant) sub.push("⚡ 稀有变异形态");
+  if(topLineage() && !state.lineage) sub.push(`倾向：${{"薯":"薯系","牛":"牛系","鸡":"鸡系","鱼":"鱼系","咖":"咖系","甜":"甜系"}[topLineage()]||""}`);
+  $("stageSub").textContent = STAGE_LABEL[s] + " · " + sub.join(" · ");
+
+  // 进度条
+  const next = s===1 ? T2 : (s===3||s===4 ? state.total_exp : T3);
+  const pct = s===3||s===4 ? 100 : Math.min(100, Math.round(state.total_exp/next*100));
+  $("expFill").style.width = pct+"%";
+  $("expNow").textContent = `经验 ${r1(state.total_exp)}`;
+  $("expNext").textContent = s===3 ? "已完全体" : (s===4 ? "已变异" : `下一阶段 ${next}`);
+
+  // 提示
+  const tips = {
+    empty: "先去「🎲 模拟点一单」拿食物",
+    young: "点下面的食物喂它 —— 喂得最多的系别决定它变成什么（喂到 30 经验成形）",
+    grown: "继续喂！本命系 ×1.5；喂「异系」攒满 20 异系值 → 触发稀有变异体 ⚡",
+    variant: "它已是变异体！换只精灵试试别的系？点「重新开始」"
+  };
+  $("tip").textContent = pantryTotal()===0 ? tips.empty
+    : (s>=4 ? tips.variant : (s>=2 ? tips.grown : tips.young));
+
+  renderPantry();
+  renderGalleryStates();
+}
+function blobSVG(color){
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="128" rx="54" ry="50" fill="${color}" opacity=".92"/>
+    <ellipse cx="86" cy="106" rx="18" ry="14" fill="rgba(255,255,255,.35)"/>
+    <circle cx="82" cy="122" r="7" fill="#241f1b"/><circle cx="118" cy="122" r="7" fill="#241f1b"/>
+    <circle cx="84.5" cy="119.5" r="2.4" fill="#fff"/><circle cx="120.5" cy="119.5" r="2.4" fill="#fff"/>
+    <ellipse cx="68" cy="138" rx="8" ry="5" fill="rgba(226,110,120,.45)"/>
+    <ellipse cx="132" cy="138" rx="8" ry="5" fill="rgba(226,110,120,.45)"/>
+    <path d="M92 140 q8 7 16 0" stroke="#241f1b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="72" cy="176" rx="14" ry="7" fill="${color}"/>
+    <ellipse cx="128" cy="176" rx="14" ry="7" fill="${color}"/>
+  </svg>`;
+}
+
+/* ---- 库存 ---- */
+function pantryTotal(){ return Object.values(pantry).reduce((a,b)=>a+b,0); }
+function renderPantry(){
+  const grid = $("pantryGrid");
+  const entries = Object.entries(pantry).filter(([,q])=>q>0).sort((a,b)=>b[1]-a[1]);
+  $("pantryCount").textContent = entries.length ? `共 ${pantryTotal()} 份` : "";
+  $("pantryEmpty").style.display = entries.length ? "none" : "block";
+  grid.innerHTML = "";
+  for(const [name, qty] of entries){
+    const div = document.createElement("div");
+    div.className = "foodItem";
+    const lin = classify(name);
+    const icon = foodIcon(name);
+    div.innerHTML = `
+      ${lin ? `<span class="dot" style="background:${LINE_COLOR[lin]}"></span>` : ""}
+      <span class="qty">×${qty}</span>
+      ${icon ? `<img src="${icon}" alt="">` : `<div style="height:46px;display:flex;align-items:center;justify-content:center;font-size:26px">🍽️</div>`}
+      <div class="fname">${name}</div>`;
+    div.addEventListener("click", ()=>feedFromPantry(name));
+    grid.appendChild(div);
+  }
+}
+function feedFromPantry(name){
+  if(!pantry[name] || pantry[name]<=0) return;
+  pantry[name] -= 1; if(pantry[name]<=0) delete pantry[name];
+  const res = feed(name);
+  saveState();
+  render();
+  bounceSpirit();
+  fxExp("+"+res.gained);
+  if(res.msg.includes("诞生") || res.msg.includes("变异体") || res.msg.includes("完全体") || res.msg.includes("成形")){
+    showBanner(res.msg); sparkleBurst();
+  }else{
+    showBanner(res.msg, true);
+  }
+  renderPantry();
+}
+function bounceSpirit(){
+  const el = $("spiritSlot").firstElementChild;
+  if(!el) return;
+  el.classList.remove("bounce"); void el.offsetWidth; el.classList.add("bounce");
+}
+function fxExp(txt){
+  const layer = $("fxlayer");
+  const d = document.createElement("div");
+  d.className = "fxexp"; d.textContent = txt;
+  layer.appendChild(d);
+  requestAnimationFrame(()=>d.classList.add("go"));
+  setTimeout(()=>d.remove(), 1100);
+}
+function sparkleBurst(){
+  const layer = $("fxlayer");
+  for(let i=0;i<10;i++){
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.textContent = ["✦","✧","⭐","✨"][i%4];
+    s.style.left = (18+Math.random()*64)+"%";
+    s.style.top = (30+Math.random()*30)+"%";
+    layer.appendChild(s);
+    requestAnimationFrame(()=>s.classList.add("go"));
+    setTimeout(()=>s.remove(), 1200);
+  }
+}
+function showBanner(msg, subtle=false){
+  const b = $("msgBanner");
+  b.textContent = msg;
+  b.style.opacity = subtle ? .88 : 1;
+  b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+  clearTimeout(showBanner._t);
+  showBanner._t = setTimeout(()=>b.classList.remove("show"), 4200);
+}
+
+/* ---- 模拟订单 ---- */
+let orderTemplates = null;
+async function loadOrders(){
+  if(orderTemplates) return orderTemplates;
+  try{
+    const d = await fetch("../../data/sim_orders.json").then(r=>r.json());
+    orderTemplates = d.data.list;
+  }catch(e){ orderTemplates = []; }
+  return orderTemplates;
+}
+const SINGLE_POOL = ["巨无霸","麦辣鸡腿汉堡","麦香鸡","麦香鱼","中薯条","大薯条","麦乐鸡","麦咖啡™奶铁","圆筒冰淇淋","香芋派","奥利奥麦旋风","双层吉士汉堡","板烧鸡腿堡","麦辣鸡翅","那么大鸡排","姜汁撞奶风味派","咖啡豆面包"];
+const STORES = ["麦当劳中山兴中广场餐厅","麦当劳中山兴华中路餐厅","麦当劳中山富华道餐厅","麦当劳中山逢源路餐厅","麦当劳中山翠景道得来速餐厅"];
+
+function randPick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function makeOrder(){
+  const combo = orderTemplates && orderTemplates.length && Math.random()<0.45;
+  if(combo){ return JSON.parse(JSON.stringify(randPick(orderTemplates))); }
+  const n = 1+Math.floor(Math.random()*3);
+  const items = [];
+  for(let i=0;i<n;i++){
+    const name = randPick(SINGLE_POOL);
+    const qty = Math.random()<0.25 ? 2 : 1;
+    items.push({productName:name, quantity:qty, comboItemList:[]});
+  }
+  return {orderId:"DEMO-"+Date.now(), storeName:randPick(STORES), orderProductList:items};
+}
+function orderToFoods(order){
+  const foods = [];
+  for(const it of order.orderProductList||[]){
+    const parts = it.comboItemList||[];
+    if(parts.length){
+      for(const p of parts) foods.push({name:p.name, qty:p.quantity||1});
+    }else{
+      foods.push({name:it.productName, qty:it.quantity||1});
+    }
+  }
+  return foods;
+}
+async function simulateOrder(){
+  await loadOrders();
+  const order = makeOrder();
+  const foods = orderToFoods(order);
+  let n = 0;
+  for(const f of foods){
+    if(!f.name) continue;
+    if(f.name.includes("可乐")||f.name.includes("汽水")||f.name.includes("牛奶")||f.name.includes("玉米")){
+      // 饮料/配菜类：无感，不占库存
+      continue;
+    }
+    pantry[f.name] = (pantry[f.name]||0) + f.qty;
+    n += f.qty;
+  }
+  // 兜底：如果一单全是"无感"项，补一样
+  if(n===0){ const name = randPick(SINGLE_POOL); pantry[name]=(pantry[name]||0)+1; n=1; }
+  saveState();
+  render();
+  const names = foods.map(f=>f.name+(f.qty>1?`×${f.qty}`:"")).join("、");
+  toast(`🧾 在「${order.storeName}」模拟点了一单：<b>${names}</b><br>→ 食物已入库，点食物喂它！`);
+}
+
+/* ---- 进化谱 ---- */
+function buildGallery(){
+  const wrap = $("gallery");
+  wrap.innerHTML = "";
+  for(const [lin, tiers] of Object.entries(CFG.forms)){
+    const lm = CFG.lineageMeta[lin] || {};
+    const row = document.createElement("div");
+    row.className = "lineRow";
+    let cells = "";
+    const usedSlug = new Set();
+    for(const t of ["2","3","4"]){
+      const f = tiers[t]; if(!f) continue;
+      const dup = usedSlug.has(f.slug);
+      usedSlug.add(f.slug);
+      if(dup) continue;
+      const tierName = t==="2"?"成形":(t==="3"?"完全体":"变异体");
+      cells += `<div class="cell" data-key="${lin}-${t}" data-slugs="${[...usedSlug].join(",")}">
+        <span class="check" style="display:none">✓</span>
+        <img src="../../assets/spirits/${f.slug}.png" alt="${f.name}" loading="lazy">
+        <div class="cname">${f.name}</div>
+        <div class="tier">${tierName}${lin==="鱼"?' · 唯一':''}</div>
+      </div>`;
+    }
+    row.innerHTML = `<div class="lineName">${lm.name||lin}${lm.rarity==="rare"?'<span class="rare">稀有系</span>':""}</div>
+      <div class="cells">${cells}</div>`;
+    wrap.appendChild(row);
+  }
+  renderGalleryStates();
+}
+function renderGalleryStates(){
+  document.querySelectorAll("#gallery .cell").forEach(c=>{
+    const key = c.dataset.key;
+    const on = !!seen[key];
+    c.classList.toggle("on", on);
+    c.querySelector(".check").style.display = on ? "" : "none";
+  });
+}
+
+/* ---- 3D 手办柜 ---- */
+function init3d(){
+  models3d = [
+    ["beef_double_cheese","牛系·芝士牛堡"],
+    ["chicken_burger","鸡系·咕咕鸡"],
+    ["sundae_cherry","甜系·车厘子奶油团"],
+  ];
+  const tabs = $("tabs3d");
+  tabs.innerHTML = "";
+  models3d.forEach(([slug,label], i)=>{
+    const b = document.createElement("button");
+    b.className = "tab3d" + (i===0?" active":"");
+    b.textContent = label;
+    b.addEventListener("click", ()=>{
+      tabs.querySelectorAll(".tab3d").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      load3d(slug);
+    });
+    tabs.appendChild(b);
+  });
+  // 进入视口后再加载第一个
+  const io = new IntersectionObserver((es)=>{
+    if(es.some(e=>e.isIntersecting)){ io.disconnect(); load3d(models3d[0][0]); }
+  },{threshold:.2});
+  io.observe($("mv"));
+}
+function load3d(slug){
+  const mv = $("mv");
+  const src = `../../assets/3d/${slug}.glb`;
+  if(mv.getAttribute("src")===src) return;
+  mv.setAttribute("src", src);
+  mv.setAttribute("alt", `3D 手办 ${slug}`);
+}
+
+/* ---- 分享名片 ---- */
+function makeShareCard(){
+  const s = stageOf();
+  const form = formFor();
+  const W=720, H=1000;
+  const cv = document.createElement("canvas");
+  cv.width=W; cv.height=H;
+  const ctx = cv.getContext("2d");
+
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#221d1a"); g.addColorStop(1,"#0e0d0c");
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="rgba(255,199,44,.35)"; ctx.lineWidth=3;
+  roundRect(ctx, 24,24,W-48,H-48,34); ctx.stroke();
+
+  ctx.textAlign="center";
+  ctx.fillStyle="#ffc72c"; ctx.font="800 34px sans-serif";
+  ctx.fillText("麦麦精灵 McPet", W/2, 100);
+  ctx.fillStyle="#a49c92"; ctx.font="400 22px sans-serif";
+  ctx.fillText("我的养成记录", W/2, 140);
+
+  const draw = ()=>{ downloadCard(cv); };
+  if(form){
+    const img = new Image();
+    img.onload = ()=>{
+      const iw=400, ih=400;
+      ctx.drawImage(img, (W-iw)/2, 200, iw, ih);
+      afterImg();
+    };
+    img.onerror = ()=>{ afterImg(); };
+    img.src = `../../assets/spirits/${form.slug}.png`;
+  }else{
+    ctx.font="160px sans-serif";
+    ctx.fillText("🥚", W/2, 460);
+    afterImg();
+  }
+  function afterImg(){
+    ctx.fillStyle="#f3efe9"; ctx.font="800 44px sans-serif";
+    ctx.fillText(state.name, W/2, 690);
+    const lm = CFG.lineageMeta[state.lineage] || {};
+    const sub = form
+      ? `${lm.name||""} · ${form.name} · ${STAGE_LABEL[s]}${state.variant?" ⚡":""}`
+      : "幼体 · 还没成形";
+    ctx.fillStyle="#ffc72c"; ctx.font="600 28px sans-serif";
+    ctx.fillText(sub, W/2, 740);
+
+    ctx.fillStyle="#a49c92"; ctx.font="400 24px sans-serif";
+    ctx.fillText(`已投喂 ${state.feed_count} 次 · 累计经验 ${r1(state.total_exp)}`, W/2, 800);
+    if(state.fed_meals.length){
+      ctx.font="400 22px sans-serif";
+      const last = state.fed_meals[0];
+      ctx.fillText(`最近吃了一顿「${last.length>14?last.slice(0,14)+"…":last}」`, W/2, 840);
+    }
+    ctx.fillStyle="#6f675e"; ctx.font="400 20px sans-serif";
+    ctx.fillText("喂什么变什么 · 六系分支进化 · 稀有变异体", W/2, 900);
+    ctx.fillStyle="#ffc72c"; ctx.font="700 22px sans-serif";
+    ctx.fillText("github.com/WuJunwei2003/McDonald-pet", W/2, 936);
+    draw();
+  }
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function downloadCard(cv){
+  cv.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `麦麦精灵-${state.name}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    toast("📸 名片已生成——看看下载文件夹！");
+  }, "image/png");
+}
+
+/* ---- 交互绑定 ---- */
+function bind(){
+  $("btnHatch").addEventListener("click", ()=>{
+    const name = ($("hatchName").value||"").trim() || "麦麦";
+    state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[]};
+    saveState(); render();
+    showBanner(`🥚 咔嚓——「${name}」孵化了！快去模拟点一单，喂它点什么。`);
+  });
+  $("hatchName").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnHatch").click(); });
+  $("btnOrder").addEventListener("click", simulateOrder);
+  $("btnReset").addEventListener("click", ()=>{
+    if(confirm("重新开始会丢掉当前精灵，确定吗？")){
+      state=null; pantry={}; seen={};
+      saveState(); render();
+      $("spiritSlot").innerHTML="";
+    }
+  });
+  $("btnShare").addEventListener("click", ()=>{
+    if(!state){ toast("先孵化一只精灵再生成名片哟"); return; }
+    makeShareCard();
+  });
+}
+
+/* ---- toast ---- */
+let toastT=null;
+function toast(html){
+  const t = $("toast");
+  t.innerHTML = html;
+  t.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove("show"), 3600);
+}
+
+boot().catch(e=>{
+  console.error(e);
+  toast("加载数据失败：" + (e && e.message ? e.message : "未知错误") + "（本地请用 python -m http.server 打开）");
+});
+</script>
+</body>
+</html>
