@@ -64,6 +64,10 @@
   .lineageTag{font-size:12px; padding:2px 10px; border-radius:99px; border:1px solid var(--line);
     background:var(--card2); color:var(--dim)}
   .lineageTag.rare{color:#9ec8ff; border-color:rgba(133,183,235,.45)}
+  .dyeTag{display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:2px 10px;
+    border-radius:99px; border:1px solid var(--line); background:var(--card2); color:var(--dim)}
+  .dyeTag i{width:10px; height:10px; border-radius:50%; display:inline-block;
+    border:1px solid rgba(255,255,255,.3); flex:0 0 auto}
   .stageSub{font-size:12px; color:var(--faint); margin-top:4px}
   .msgBanner{margin:10px auto 0; max-width:480px; font-size:13px; line-height:1.55; color:var(--yellow);
     background:rgba(255,199,44,.09); border:1px solid rgba(255,199,44,.28); border-radius:12px;
@@ -171,6 +175,7 @@
     <div class="nameRow">
       <span class="spiritName" id="spiritName">…</span>
       <span class="lineageTag" id="lineageTag" style="display:none"></span>
+      <span class="dyeTag" id="dyeTag" style="display:none"><i id="dyeSwatch"></i><span id="dyeName"></span></span>
     </div>
     <div class="stageSub" id="stageSub"></div>
     <div class="msgBanner" id="msgBanner"></div>
@@ -231,6 +236,7 @@
 <div id="toast"></div>
 
 <script type="module" src="../../assets/3d/model-viewer.min.js"></script>
+<script src="dye.js"></script>
 <script>
 "use strict";
 /* ========= 常量与工具 ========= */
@@ -249,6 +255,14 @@ const EVOLVE_LINES = {
 };
 const STAGE_LABEL = {1:"幼体",2:"成形",3:"完全体",4:"变异体"};
 const LINE_COLOR = {"薯":"#F5A742","牛":"#D85A30","鸡":"#F0E3C8","鱼":"#85B7EB","咖":"#9A6B44","甜":"#ED93B1"};
+const DYE_LINES = {
+  "薯":"🎨 金黄的色调渗了进去……",
+  "牛":"🎨 染上了一层牛肉的红棕……",
+  "鸡":"🎨 变得暖黄了……",
+  "鱼":"🎨 透出一丝凉凉的鱼肚蓝……",
+  "咖":"🎨 咖啡的深色正在蔓延……",
+  "甜":"🎨 泛起了淡淡的奶油粉……",
+};
 
 const $ = id => document.getElementById(id);
 const r1 = x => Math.round(x*10)/10;
@@ -278,6 +292,7 @@ function loadState(){
     if(raw){
       const d = JSON.parse(raw);
       state = d.state || null; seen = d.seen || {}; pantry = d.pantry || {};
+      if(state){ state.fed_lins = state.fed_lins || {}; state.dye_flags = state.dye_flags || {}; }
     }
   }catch(e){ /* ignore */ }
 }
@@ -307,6 +322,7 @@ function topLineage(){
 }
 function feed(meal){
   const lin = classify(meal);
+  const dyeBefore = currentDye();
   let gained, kind = "neutral";
   if(!state.lineage){
     if(lin===null){ gained = BASE_EXP*0.4; }
@@ -319,6 +335,7 @@ function feed(meal){
   state.total_exp = r1(state.total_exp + gained);
   state.feed_count += 1;
   state.fed_meals.unshift(meal); state.fed_meals = state.fed_meals.slice(0,20);
+  if(lin){ state.fed_lins = state.fed_lins || {}; state.fed_lins[lin] = (state.fed_lins[lin] || 0) + 1; }
 
   let msg = "";
   const after0 = stageOf();
@@ -345,9 +362,26 @@ function feed(meal){
       msg = "⚡ 异系能量满溢……它突破了形态，变成了变异体！";
     }
   }
+
+  // 异色染色：颜色变化播报 + 里程碑文案（汉堡×咖啡 / 咖啡×浅色 等）
+  const dyeAfter = currentDye();
+  let dyeLine = "";
+  if(lin && lin !== state.lineage && (dyeAfter.s - dyeBefore.s) >= 0.02){
+    dyeLine = DYE_LINES[lin] || "🎨 它的颜色变了一点……";
+    const flags = state.dye_flags = state.dye_flags || {};
+    if(state.lineage === "牛" && lin === "咖" && dyeAfter.s >= 0.4 && !flags.burger_gray){
+      flags.burger_gray = 1;
+      dyeLine = "🍔 它的面包部分开始泛灰发黑了……（咖啡的深色在蔓延）";
+    }
+    if(state.lineage === "咖" && dyeAfter.s >= 0.3){
+      if(dyeAfter.name === "雪碧色" && !flags.coffee_pale){ flags.coffee_pale = 1; dyeLine = "☕ 它的颜色越来越淡了……像一杯雪碧！"; }
+      if(dyeAfter.name === "怡泉黄" && !flags.coffee_yellow){ flags.coffee_yellow = 1; dyeLine = "☕ 泛起了怡泉+C 的橙黄……"; }
+    }
+  }
+
   unlockSeen();
   saveState();
-  return {gained, msg, kind};
+  return {gained, msg, kind, dyeLine, dye: dyeAfter};
 }
 function formFor(){
   const s = stageOf();
@@ -368,6 +402,68 @@ function foodIcon(meal){
     if(meal && meal.includes(kw)) return `../../assets/spirits/${slug}.png`;
   }
   return null;
+}
+
+/* ========= 异色染色（颜色随喂养混合渐变） ========= */
+const baseImgs = {}, tintCache = {};
+
+function loadBase(slug){
+  return new Promise(res=>{
+    if(baseImgs[slug]) return res(baseImgs[slug]);
+    const im = new Image();
+    im.onload = ()=>{ baseImgs[slug] = im; res(im); };
+    im.onerror = ()=>res(null);
+    im.src = `../../assets/spirits/${slug}.png`;
+  });
+}
+
+async function getTintedCanvas(slug, hex, s){
+  const key = `${slug}|${hex}|${s.toFixed(2)}`;
+  if(tintCache[key]) return tintCache[key];
+  const im = await loadBase(slug);
+  if(!im) return null;
+  const cv = document.createElement("canvas");
+  cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+  const ctx = cv.getContext("2d");
+  ctx.drawImage(im, 0, 0);
+  McPetDye.tintCanvas(ctx, cv.width, cv.height, hex, s);
+  tintCache[key] = cv;
+  if(Object.keys(tintCache).length > 150){ for(const k of Object.keys(tintCache)) delete tintCache[k]; }
+  return cv;
+}
+
+function currentDye(){
+  if(!state) return null;
+  const dyeMeta = {};
+  for(const [k,v] of Object.entries(CFG.lineageMeta)) dyeMeta[k] = {dye_color: v.dye_color, dye_name: v.dye_name};
+  return McPetDye.computeBlend(state.lineage, state.fed_lins || {}, dyeMeta);
+}
+
+let visualSeq = 0;
+async function updateSpiritVisual(){
+  if(!state){ $("spiritSlot").innerHTML = ""; return; }
+  const seq = ++visualSeq;
+  const slot = $("spiritSlot");
+  const form = formFor();
+  const dye = currentDye();
+  if(!form){
+    // 幼体：小团子的颜色 = 当前混色（喂什么染什么）
+    const hex = dye ? dye.hex : "#BFB8AC";
+    const key = `blob|${hex}`;
+    if(slot.dataset.key !== key){
+      slot.dataset.key = key;
+      slot.innerHTML = `<div class="blobWrap" id="blob">${blobSVG(hex)}</div>`;
+    }
+    return;
+  }
+  const key = `${form.slug}|${dye.hex}|${dye.s.toFixed(2)}`;
+  if(slot.dataset.key === key) return;
+  const cv = await getTintedCanvas(form.slug, dye.hex, dye.s);
+  if(seq !== visualSeq || !cv) return;   // 已有更新的渲染请求则丢弃
+  cv.className = "spiritImg";
+  slot.dataset.key = key;
+  slot.innerHTML = "";
+  slot.appendChild(cv);
 }
 
 /* ========= 渲染 ========= */
@@ -391,21 +487,8 @@ function render(){
   const form = formFor();
   $("spiritName").textContent = state.name;
 
-  // 形象
-  const slot = $("spiritSlot");
-  if(form){
-    if(!slot.querySelector("img.spiritImg")){
-      slot.innerHTML = `<img class="spiritImg" id="spiritImg" alt="${state.name}">`;
-    }
-    const img = slot.querySelector("img");
-    const src = `../../assets/spirits/${form.slug}.png`;
-    if(img.getAttribute("src") !== src){ img.src = src; }
-  }else{
-    // 幼体：中性/倾向色小团子
-    const hint = topLineage();
-    const color = hint ? LINE_COLOR[hint] : "#BFB8AC";
-    slot.innerHTML = `<div class="blobWrap" id="blob">${blobSVG(color)}</div>`;
-  }
+  // 形象（含异色染色）
+  updateSpiritVisual();
 
   // 系别标签
   const lm = CFG.lineageMeta[state.lineage];
@@ -423,6 +506,17 @@ function render(){
   if(topLineage() && !state.lineage) sub.push(`倾向：${{"薯":"薯系","牛":"牛系","鸡":"鸡系","鱼":"鱼系","咖":"咖系","甜":"甜系"}[topLineage()]||""}`);
   $("stageSub").textContent = STAGE_LABEL[s] + " · " + sub.join(" · ");
 
+  // 异色标签
+  const dye = currentDye();
+  const chip = $("dyeTag");
+  if(dye && dye.s >= 0.05){
+    chip.style.display = "";
+    $("dyeSwatch").style.background = dye.hex;
+    $("dyeName").textContent = `${dye.name} ${Math.round(dye.s*100)}%`;
+  }else{
+    chip.style.display = "none";
+  }
+
   // 进度条
   const next = s===1 ? T2 : (s===3||s===4 ? state.total_exp : T3);
   const pct = s===3||s===4 ? 100 : Math.min(100, Math.round(state.total_exp/next*100));
@@ -433,8 +527,8 @@ function render(){
   // 提示
   const tips = {
     empty: "先去「🎲 模拟点一单」拿食物",
-    young: "点下面的食物喂它 —— 喂得最多的系别决定它变成什么（喂到 30 经验成形）",
-    grown: "继续喂！本命系 ×1.5；喂「异系」攒满 20 异系值 → 触发稀有变异体 ⚡",
+    young: "点下面的食物喂它——喂得最多的系别决定它变成什么（30 经验成形）；喂异系还会给它「染色」🎨",
+    grown: "继续喂！本命系 ×1.5；喂异系攒满 20 会变异 ⚡，颜色也会慢慢变化 🎨",
     variant: "它已是变异体！换只精灵试试别的系？点「重新开始」"
   };
   $("tip").textContent = pantryTotal()===0 ? tips.empty
@@ -487,10 +581,11 @@ function feedFromPantry(name){
   render();
   bounceSpirit();
   fxExp("+"+res.gained);
+  const fullMsg = res.dyeLine ? `${res.msg} ｜ ${res.dyeLine}` : res.msg;
   if(res.msg.includes("诞生") || res.msg.includes("变异体") || res.msg.includes("完全体") || res.msg.includes("成形")){
-    showBanner(res.msg); sparkleBurst();
+    showBanner(fullMsg); sparkleBurst();
   }else{
-    showBanner(res.msg, true);
+    showBanner(fullMsg, true);
   }
   renderPantry();
 }
@@ -696,14 +791,14 @@ function makeShareCard(){
 
   const draw = ()=>{ downloadCard(cv); };
   if(form){
-    const img = new Image();
-    img.onload = ()=>{
-      const iw=400, ih=400;
-      ctx.drawImage(img, (W-iw)/2, 200, iw, ih);
+    const dye = currentDye();
+    getTintedCanvas(form.slug, dye.hex, dye.s).then(tcv=>{
+      if(tcv){
+        const iw=400, ih=400;
+        ctx.drawImage(tcv, (W-iw)/2, 200, iw, ih);
+      }
       afterImg();
-    };
-    img.onerror = ()=>{ afterImg(); };
-    img.src = `../../assets/spirits/${form.slug}.png`;
+    });
   }else{
     ctx.font="160px sans-serif";
     ctx.fillText("🥚", W/2, 460);
@@ -713,8 +808,10 @@ function makeShareCard(){
     ctx.fillStyle="#f3efe9"; ctx.font="800 44px sans-serif";
     ctx.fillText(state.name, W/2, 690);
     const lm = CFG.lineageMeta[state.lineage] || {};
+    const d2 = currentDye();
+    const dyeTxt = (d2 && d2.s >= 0.05) ? ` · 体色·${d2.name}` : "";
     const sub = form
-      ? `${lm.name||""} · ${form.name} · ${STAGE_LABEL[s]}${state.variant?" ⚡":""}`
+      ? `${lm.name||""} · ${form.name} · ${STAGE_LABEL[s]}${state.variant?" ⚡":""}${dyeTxt}`
       : "幼体 · 还没成形";
     ctx.fillStyle="#ffc72c"; ctx.font="600 28px sans-serif";
     ctx.fillText(sub, W/2, 740);
@@ -753,7 +850,7 @@ function downloadCard(cv){
 function bind(){
   $("btnHatch").addEventListener("click", ()=>{
     const name = ($("hatchName").value||"").trim() || "麦麦";
-    state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[], ordered_before:false};
+    state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[], ordered_before:false, fed_lins:{}, dye_flags:{}};
     saveState(); render();
     showBanner(`🥚 咔嚓——「${name}」孵化了！快去模拟点一单，喂它点什么。`);
   });
