@@ -84,6 +84,7 @@
   .btnOrder{background:linear-gradient(135deg,#e04b3a,#c83828); color:#fff;
     box-shadow:0 6px 18px rgba(224,75,58,.35)}
   .btnOrder:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.8; cursor:default}
   .btnGhost{background:var(--card2); color:var(--dim); border:1px solid var(--line); flex:0 0 108px}
 
   /* hatch */
@@ -571,6 +572,7 @@ async function simulateOrder(){
   const order = makeOrder();
   const foods = orderToFoods(order);
   let n = 0;
+  const kept = [];
   for(const f of foods){
     if(!f.name) continue;
     if(f.name.includes("可乐")||f.name.includes("汽水")||f.name.includes("牛奶")||f.name.includes("玉米")){
@@ -579,13 +581,24 @@ async function simulateOrder(){
     }
     pantry[f.name] = (pantry[f.name]||0) + f.qty;
     n += f.qty;
+    kept.push(f);
   }
   // 兜底：如果一单全是"无感"项，补一样
-  if(n===0){ const name = randPick(SINGLE_POOL); pantry[name]=(pantry[name]||0)+1; n=1; }
+  if(n===0){ const name = randPick(SINGLE_POOL); pantry[name]=(pantry[name]||0)+1; n=1; kept.push({name, qty:1}); }
   saveState();
   render();
-  const names = foods.map(f=>f.name+(f.qty>1?`×${f.qty}`:"")).join("、");
-  toast(`🧾 在「${order.storeName}」模拟点了一单：<b>${names}</b><br>→ 食物已入库，点食物喂它！`);
+  const names = kept.map(f=>f.name+(f.qty>1?`×${f.qty}`:"")).join("、");
+  // 强反馈：卡片内横幅 + 精灵抖动 + 向上漂浮
+  showBanner(`🧾 在「${order.storeName}」点单成功：${names}（+${n} 份已入库）`);
+  bounceSpirit();
+  fxExp(`🍱 +${n} 份食物`);
+  // 首次点单：自动滚动到食物库存，让玩家看到食物去哪了
+  if(!state.ordered_before){
+    state.ordered_before = true;
+    saveState();
+    setTimeout(()=>{ $("pantryCard").scrollIntoView({behavior:"smooth", block:"center"}); }, 900);
+  }
+  return {n};
 }
 
 /* ---- 进化谱 ---- */
@@ -740,12 +753,27 @@ function downloadCard(cv){
 function bind(){
   $("btnHatch").addEventListener("click", ()=>{
     const name = ($("hatchName").value||"").trim() || "麦麦";
-    state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[]};
+    state = {name, lineage:null, total_exp:0, lineage_exp:{}, hetero:{}, variant:false, feed_count:0, fed_meals:[], ordered_before:false};
     saveState(); render();
     showBanner(`🥚 咔嚓——「${name}」孵化了！快去模拟点一单，喂它点什么。`);
   });
   $("hatchName").addEventListener("keydown", e=>{ if(e.key==="Enter") $("btnHatch").click(); });
-  $("btnOrder").addEventListener("click", simulateOrder);
+  $("btnOrder").addEventListener("click", async ()=>{
+    const btn = $("btnOrder");
+    if(btn.disabled) return;
+    btn.disabled = true;
+    const old = btn.textContent;
+    btn.textContent = "🧾 下单中…";
+    try{
+      const info = await simulateOrder();
+      btn.textContent = `✓ 已入库 ${info.n} 份食物`;
+      setTimeout(()=>{ btn.textContent = old; btn.disabled = false; }, 1800);
+    }catch(e){
+      console.error(e);
+      showBanner("出错了：" + ((e && e.message) || "未知错误") + "——刷新页面试试");
+      btn.textContent = old; btn.disabled = false;
+    }
+  });
   $("btnReset").addEventListener("click", ()=>{
     if(confirm("重新开始会丢掉当前精灵，确定吗？")){
       state=null; pantry={}; seen={};
