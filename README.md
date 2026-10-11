@@ -6,6 +6,9 @@
 
 一个基于麦当劳官方 MCP 的**养成系 Skill**：领养一只麦麦精灵，它吃你**真实的麦当劳订单**长大。喂薯条多，它长成薯系；喂牛肉堡多，它长成牛系；喂得越杂，越可能喂出稀有的**变异体**。
 
+> **🎮 在线试玩（零安装，打开即玩）**：**https://wujunwei2003.github.io/McDonald-pet/**
+> 无需安装任何环境——浏览器里直接孵化、喂养、看它进化（模拟订单模式）。
+
 ## 目标用户
 
 - **麦当劳常客**：给日常点单加点乐趣——你的点单习惯，就是精灵的基因
@@ -23,7 +26,11 @@
 
 ## 快速开始
 
-### 网页版（推荐体验）
+### 在线试玩（推荐先试）
+
+打开 **https://wujunwei2003.github.io/McDonald-pet/** —— 零安装，浏览器里直接孵化/喂养/看进化（模拟订单模式）。
+
+### 网页版（完整版，本机运行）
 
 ```bash
 python app.py          # 自动打开浏览器 http://127.0.0.1:8765
@@ -129,6 +136,10 @@ mcpet/
 ├── mcp-config.example.json  # 脱敏配置示例（仅环境变量占位符）
 ├── workbuddy.md             # WorkBuddy 开发上下文（专项奖励）
 ├── LICENSE                  # MIT
+├── index.html               # GitHub Pages 入口（跳转到在线试玩页）
+├── docs/
+│   ├── demo/                # 🎮 在线试玩页（静态版，零安装打开即玩）
+│   └── screenshots/         # 界面截图
 ├── skill/
 │   └── SKILL.md             # WorkBuddy Skill 封装（对话式养精灵）
 ├── app.py                   # 网页版入口（本地服务 + MCP 转发 + 静态资源）
@@ -149,7 +160,6 @@ mcpet/
 ├── assets/
 │   ├── spirits/             # 精灵形态素材（512² 透明 PNG ×21，构建产物）
 │   └── 3d/                  # 3D 手办（GLB ×6）+ model-viewer + viewer.html
-├── docs/screenshots/        # 界面截图
 ├── tools/                   # 构建期工具（需要 Pillow，不影响运行时零依赖）
 │   ├── prepare_spirits.py   # 抠图 → 透明 PNG → 归一化 512²（含 QA 对照图）
 │   ├── gen3d.py             # 图生 3D（直调云端，进程内传图绕过命令行长度限制）
