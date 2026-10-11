@@ -1,0 +1,151 @@
+{
+  "note": "模拟订单样本 —— 格式与 MCP order-list 真实返回完全一致（含套餐子项 comboItemList）。用于 simulate 命令演示。",
+  "data": {
+    "list": [
+      {
+        "orderId": "SIM-0001",
+        "createTime": "2026-10-07 13:52:16",
+        "storeName": "麦当劳中山兴华中路餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900016048",
+            "productName": "随心配1+1套餐",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "521316", "name": "高达吉士双牛堡", "quantity": 1 },
+              { "productCode": "515520", "name": "中杯怡泉+C", "quantity": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0002",
+        "createTime": "2026-10-08 12:30:05",
+        "storeName": "麦当劳中山兴中广场餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900005456",
+            "productName": "麦辣鸡腿汉堡三件套",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "1440", "name": "麦辣鸡腿汉堡", "quantity": 1 },
+              { "productCode": "4810", "name": "中薯条", "quantity": 1 },
+              { "productCode": "3050", "name": "可乐中杯", "quantity": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0003",
+        "createTime": "2026-10-09 19:02:44",
+        "storeName": "麦当劳中山兴中广场餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900005466",
+            "productName": "巨无霸三件套",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "1100", "name": "巨无霸", "quantity": 1 },
+              { "productCode": "4810", "name": "中薯条", "quantity": 1 },
+              { "productCode": "3050", "name": "可乐中杯", "quantity": 1 }
+            ]
+          },
+          {
+            "productCode": "1401",
+            "productName": "麦乐鸡",
+            "quantity": 1,
+            "comboItemList": []
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0004",
+        "createTime": "2026-10-05 15:10:00",
+        "storeName": "麦当劳中山逢源路餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "1600",
+            "productName": "麦香鱼",
+            "quantity": 1,
+            "comboItemList": []
+          },
+          {
+            "productCode": "515837",
+            "productName": "圆筒冰淇淋",
+            "quantity": 1,
+            "comboItemList": []
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0005",
+        "createTime": "2026-10-04 08:20:11",
+        "storeName": "麦当劳中山富华道餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "507372",
+            "productName": "麦咖啡™奶铁",
+            "quantity": 1,
+            "comboItemList": []
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0006",
+        "createTime": "2026-10-02 18:02:27",
+        "storeName": "麦当劳中山兴华中路餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900016238",
+            "productName": "2份风味派",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "521907", "name": "姜汁撞奶风味派", "quantity": 2 }
+            ]
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0007",
+        "createTime": "2026-09-28 17:30:00",
+        "storeName": "麦当劳中山翠景道得来速餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900016056",
+            "productName": "麦乐鸡开心乐园餐",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "1401", "name": "麦乐鸡", "quantity": 1 },
+              { "productCode": "4437", "name": "小杯玉米杯", "quantity": 1 },
+              { "productCode": "3755", "name": "纯牛奶(盒装)", "quantity": 1 }
+            ]
+          }
+        ]
+      },
+      {
+        "orderId": "SIM-0008",
+        "createTime": "2026-09-22 12:11:38",
+        "storeName": "麦当劳中山兴中广场餐厅",
+        "orderStatus": "订单已完成",
+        "orderProductList": [
+          {
+            "productCode": "9900013304",
+            "productName": "人气经典随心配",
+            "quantity": 1,
+            "comboItemList": [
+              { "productCode": "1120", "name": "双层吉士汉堡", "quantity": 1 },
+              { "productCode": "4106", "name": "香芋派", "quantity": 1 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+# 麦麦精灵 McPet
+
+# 本地凭证（绝不提交）
+.mcpet.token
+.lux3d.key
+lux3d-key.txt
+*.token
+
+# 本地状态
+_demo_state.json
+_sim_state.json
+_sync_state.json
+_*.txt
+_*.py
+_*.json
+_*.bat
+
+# 构建缓存 / 临时产物
+tools/_3d/
+tools/_qa/
+_shot_*.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

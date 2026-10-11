@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "name": "麦麦精灵 · 形态表",
+    "canvas": 512,
+    "note": "slug 对应 assets/spirits/<slug>.png，由 tools/prepare_spirits.py 生成；tier：2 成形 / 3 完全体 / 4 变异体",
+    "source": "picture/ 原始素材（用户提供）→ 抠图归一化"
+  },
+
+  "lineages": {
+    "薯": {
+      "2": {"slug": "fries_m", "name": "金薯灵", "desc": "一份中薯条注入了灵魂"},
+      "3": {"slug": "fries_wave", "name": "波纹金薯灵", "desc": "卷卷的薯条，嚼起来更响"},
+      "4": {"slug": "fries_ring", "name": "环形金薯灵", "desc": "薯条自己卷成了圈——异变"}
+    },
+    "牛": {
+      "2": {"slug": "beef_single", "name": "小牛堡", "desc": "一层牛肉一层芝士一层番茄"},
+      "3": {"slug": "beef_double", "name": "双层小牛堡", "desc": "牛肉力量翻倍"},
+      "4": {"slug": "beef_double_cheese", "name": "芝士双层牛堡", "desc": "双层牛肉 + 双层芝士，究极体"}
+    },
+    "鸡": {
+      "2": {"slug": "chicken_burger", "name": "咕咕鸡", "desc": "麦香鸡版本的咕咕鸡"},
+      "3": {"slug": "chicken_thigh", "name": "大腿咕咕鸡", "desc": "长出脆皮大腿"},
+      "4": {"slug": "chicken_drum", "name": "小腿咕咕鸡", "desc": "脆皮小腿，跳得更高了"}
+    },
+    "鱼": {
+      "2": {"slug": "fish_burger", "name": "鱼板仔", "desc": "菜单里鱼类最少——稀有系"},
+      "3": {"slug": "fish_burger", "name": "鱼板仔", "desc": "菜单里鱼类最少——稀有系"},
+      "4": {"slug": "fish_burger", "name": "鱼板仔", "desc": "菜单里鱼类最少——稀有系"}
+    },
+    "咖": {
+      "2": {"slug": "coffee_bean", "name": "咖啡豆豆", "desc": "一颗刚发芽的咖啡豆"},
+      "3": {"slug": "coffee_cup_beans", "name": "满杯咖啡豆", "desc": "攒满一整杯豆子"},
+      "4": {"slug": "coffee_cup_drink", "name": "出杯咖啡", "desc": "豆子终于被冲成了一杯咖啡"}
+    },
+    "甜": {
+      "2": {"slug": "sundae", "name": "奶油团", "desc": "一杯原味圣代"},
+      "3": {"slug": "sundae_cherry", "name": "车厘子奶油团", "desc": "顶上多了一颗车厘子"},
+      "4": {"slug": "sundae_strawberry_heavy", "name": "草莓火山奶油团", "desc": "草莓酱失控——甜度爆表"}
+    }
+  },
+
+  "food_icons": [
+    ["车厘子", "sundae_cherry"],
+    ["奥利奥", "sundae_oreo"],
+    ["巧克力", "sundae_choco"],
+    ["麦旋风", "sundae_oreo"],
+    ["圣代", "sundae"],
+    ["新地", "sundae"],
+    ["圆筒", "sundae"],
+    ["冰淇淋", "sundae"],
+    ["拿铁", "coffee_cup_drink2"],
+    ["美式", "coffee_cup_drink2"],
+    ["卡布", "coffee_cup_drink2"],
+    ["咖啡", "coffee_cup_drink2"],
+    ["咖啡豆", "coffee_bean"],
+    ["波纹薯条", "fries_wave"],
+    ["环形薯条", "fries_ring"],
+    ["薯条", "fries_m"],
+    ["巨无霸", "beef_double_cheese"],
+    ["双层吉士", "beef_double"],
+    ["双层牛", "beef_double"],
+    ["双吉", "beef_double"],
+    ["吉士", "beef_single"],
+    ["安格斯", "beef_single"],
+    ["牛肉", "beef_single"],
+    ["麦乐鸡", "chicken_thigh"],
+    ["鸡块", "chicken_thigh"],
+    ["鸡腿", "chicken_thigh"],
+    ["鸡翅", "chicken_drum"],
+    ["麦香鸡", "chicken_burger"],
+    ["板烧", "chicken_burger"],
+    ["麦辣", "chicken_burger"],
+    ["鸡", "chicken_burger"],
+    ["麦香鱼", "fish_burger"],
+    ["鳕鱼", "fish_burger"],
+    ["鱼", "fish_burger"]
+  ]
+}

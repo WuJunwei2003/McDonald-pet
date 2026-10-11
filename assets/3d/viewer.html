@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦精灵 · 3D 手办柜</title>
+<script type="module" src="./model-viewer.min.js"></script>
+<style>
+  :root { --bg:#141414; --card:#1d1d1d; --line:#2c2c2c; --text:#e8e8e8;
+          --muted:#9a9a9a; --gold:#F5A742; --gold-soft:#FDD07A; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); min-height:100vh;
+         font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; padding:20px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  header { display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
+  header h1 { font-size:18px; font-weight:600; }
+  header span { color:var(--muted); font-size:12.5px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .tab { font-size:13px; padding:8px 14px; border-radius:99px; cursor:pointer;
+         border:1px solid var(--line); background:#1a1a1a; color:var(--muted);
+         transition:all .15s ease; user-select:none; }
+  .tab:hover { border-color:#5a4a2a; color:var(--text); }
+  .tab.active { background:var(--gold); border-color:var(--gold); color:#241a06; font-weight:600; }
+  .tab.missing { opacity:.45; }
+  .stage { position:relative; background:
+             radial-gradient(circle at 50% 38%, #2a2318 0%, #1b1b1b 66%);
+           border:1px solid var(--line); border-radius:18px; overflow:hidden;
+           height:min(74vh, 660px); }
+  model-viewer { width:100%; height:100%; --poster-color: transparent;
+                 background: transparent; }
+  .hint { position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+          font-size:12px; color:var(--muted); background:rgba(0,0,0,.42);
+          border:1px solid #2e2e2e; padding:6px 14px; border-radius:99px;
+          white-space:nowrap; pointer-events:none; }
+  .loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+             color:var(--muted); font-size:13px; letter-spacing:1px; }
+  .foot { margin-top:14px; color:#7a7a7a; font-size:12px; line-height:1.9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔮 麦麦精灵 · 3D 手办柜</h1>
+    <span>拖动旋转 · 滚轮缩放 · 双击复位</span>
+  </header>
+  <div class="tabs" id="tabs"></div>
+  <div class="stage">
+    <model-viewer id="mv" camera-controls auto-rotate auto-rotate-delay="600"
+                  rotation-per-second="22deg" shadow-intensity="1.1"
+                  exposure="1.05" environment-image="neutral"
+                  interaction-prompt="none" touch-action="pan-y"
+                  alt="麦麦精灵 3D 手办"></model-viewer>
+    <div class="loading" id="loading" style="display:none">加载模型中…（约几 MB，请稍候）</div>
+    <div class="hint" id="hint">—</div>
+  </div>
+  <div class="foot">
+    模型由 餐品形象素材 经图生 3D（腾讯混元）生成 + 轻量化压缩（tools/compress_glb.py）。
+    每系取代表形态制作；当前已生成的手办可点击上方页签切换。
+  </div>
+</div>
+
+<script>
+const MODELS = [
+  ["fries_m",            "薯系 · 金薯灵",      "#F5A742"],
+  ["beef_double_cheese", "牛系 · 芝士双层牛堡", "#D85A30"],
+  ["chicken_burger",     "鸡系 · 咕咕鸡",      "#F0E3C8"],
+  ["fish_burger",        "鱼系 · 鱼板仔",      "#85B7EB"],
+  ["coffee_cup_drink2",  "咖系 · 咖啡·外带",    "#9A6B44"],
+  ["sundae_cherry",      "甜系 · 车厘子奶油团",  "#ED93B1"],
+];
+
+const mv = document.getElementById("mv");
+const tabs = document.getElementById("tabs");
+const hint = document.getElementById("hint");
+const loading = document.getElementById("loading");
+
+let current = null;
+
+function load(slug) {
+  if (current === slug) return;
+  current = slug;
+  [...tabs.children].forEach(el => el.classList.toggle("active", el.dataset.slug === slug));
+  hint.textContent = "加载中…";
+  loading.style.display = "flex";
+  mv.src = "./" + slug + ".glb";
+}
+
+mv.addEventListener("load", () => {
+  loading.style.display = "none";
+  const m = MODELS.find(x => x[0] === current);
+  hint.textContent = m ? m[1] + " · 已就绪" : "已就绪";
+});
+mv.addEventListener("error", () => {
+  loading.style.display = "none";
+  hint.textContent = "⚠️ 该手办尚未生成（用 tools/gen3d.py 生成后放入本目录）";
+});
+
+MODELS.forEach(([slug, label]) => {
+  const b = document.createElement("div");
+  b.className = "tab";
+  b.dataset.slug = slug;
+  b.textContent = label;
+  b.onclick = () => load(slug);
+  tabs.appendChild(b);
+});
+
+// 自动探测哪些模型已存在（HEAD 请求），不存在的置灰
+(async () => {
+  const checks = await Promise.all(MODELS.map(([slug]) =>
+    fetch("./" + slug + ".glb", {method: "HEAD"}).then(r => r.ok).catch(() => false)));
+  MODELS.forEach(([slug], i) => {
+    if (!checks[i]) tabs.children[i].classList.add("missing");
+  });
+  // 支持 ?m=<slug> 直接指定模型
+  const want = new URLSearchParams(location.search).get("m");
+  const wi = want ? MODELS.findIndex(([s]) => s === want) : -1;
+  if (wi >= 0 && checks[wi]) { load(MODELS[wi][0]); return; }
+  const first = checks.findIndex(Boolean);
+  if (first >= 0) load(MODELS[first][0]);
+  else hint.textContent = "还没有生成任何手办";
+})();
+</script>
+</body>
+</html>

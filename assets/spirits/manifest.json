@@ -1,0 +1,173 @@
+{
+  "canvas": 512,
+  "items": [
+    {
+      "slug": "fries_m",
+      "file": "assets/spirits/fries_m.png",
+      "src": "中薯条.png",
+      "cn": "中薯条",
+      "lineage": "薯",
+      "tier": 2
+    },
+    {
+      "slug": "fries_wave",
+      "file": "assets/spirits/fries_wave.png",
+      "src": "波纹薯条.png",
+      "cn": "波纹薯条",
+      "lineage": "薯",
+      "tier": 3
+    },
+    {
+      "slug": "fries_ring",
+      "file": "assets/spirits/fries_ring.png",
+      "src": "环形薯条.png",
+      "cn": "环形薯条",
+      "lineage": "薯",
+      "tier": 4
+    },
+    {
+      "slug": "beef_single",
+      "file": "assets/spirits/beef_single.png",
+      "src": "牛肉堡（一层牛肉一层芝士一层番茄）.png",
+      "cn": "芝士牛堡",
+      "lineage": "牛",
+      "tier": 2
+    },
+    {
+      "slug": "beef_double",
+      "file": "assets/spirits/beef_double.png",
+      "src": "牛肉堡（两层牛肉）.png",
+      "cn": "双层牛堡",
+      "lineage": "牛",
+      "tier": 3
+    },
+    {
+      "slug": "beef_double_cheese",
+      "file": "assets/spirits/beef_double_cheese.png",
+      "src": "牛肉堡（两层牛肉两层芝士）.png",
+      "cn": "芝士双层牛堡",
+      "lineage": "牛",
+      "tier": 4
+    },
+    {
+      "slug": "chicken_burger",
+      "file": "assets/spirits/chicken_burger.png",
+      "src": "麦香鸡.png",
+      "cn": "麦香鸡",
+      "lineage": "鸡",
+      "tier": 2
+    },
+    {
+      "slug": "chicken_thigh",
+      "file": "assets/spirits/chicken_thigh.png",
+      "src": "炸鸡大腿.png",
+      "cn": "脆鸡大腿",
+      "lineage": "鸡",
+      "tier": 3
+    },
+    {
+      "slug": "chicken_drum",
+      "file": "assets/spirits/chicken_drum.png",
+      "src": "炸鸡小腿.png",
+      "cn": "脆鸡小腿",
+      "lineage": "鸡",
+      "tier": 4
+    },
+    {
+      "slug": "fish_burger",
+      "file": "assets/spirits/fish_burger.png",
+      "src": "麦香鱼.png",
+      "cn": "麦香鱼",
+      "lineage": "鱼",
+      "tier": 2
+    },
+    {
+      "slug": "coffee_bean",
+      "file": "assets/spirits/coffee_bean.png",
+      "src": "咖啡豆.png",
+      "cn": "咖啡豆",
+      "lineage": "咖",
+      "tier": 2
+    },
+    {
+      "slug": "coffee_cup_beans",
+      "file": "assets/spirits/coffee_cup_beans.png",
+      "src": "一杯咖啡豆.png",
+      "cn": "一杯咖啡豆",
+      "lineage": "咖",
+      "tier": 3
+    },
+    {
+      "slug": "coffee_cup_drink",
+      "file": "assets/spirits/coffee_cup_drink.png",
+      "src": "一杯咖啡液.png",
+      "cn": "一杯咖啡",
+      "lineage": "咖",
+      "tier": 4
+    },
+    {
+      "slug": "coffee_cup_beans2",
+      "file": "assets/spirits/coffee_cup_beans2.png",
+      "src": "一杯咖啡豆2.png",
+      "cn": "咖啡豆杯·外带",
+      "lineage": "咖",
+      "tier": 9
+    },
+    {
+      "slug": "coffee_cup_drink2",
+      "file": "assets/spirits/coffee_cup_drink2.png",
+      "src": "一杯咖啡液2.png",
+      "cn": "咖啡·外带",
+      "lineage": "咖",
+      "tier": 9
+    },
+    {
+      "slug": "sundae",
+      "file": "assets/spirits/sundae.png",
+      "src": "圣代.png",
+      "cn": "圣代",
+      "lineage": "甜",
+      "tier": 2
+    },
+    {
+      "slug": "sundae_cherry",
+      "file": "assets/spirits/sundae_cherry.png",
+      "src": "圣代+车厘子.png",
+      "cn": "车厘子圣代",
+      "lineage": "甜",
+      "tier": 3
+    },
+    {
+      "slug": "sundae_strawberry_heavy",
+      "file": "assets/spirits/sundae_strawberry_heavy.png",
+      "src": "圣代+大量草莓酱.png",
+      "cn": "草莓圣代",
+      "lineage": "甜",
+      "tier": 4
+    },
+    {
+      "slug": "sundae_strawberry_light",
+      "file": "assets/spirits/sundae_strawberry_light.png",
+      "src": "圣代+少量草莓酱.png",
+      "cn": "轻草莓圣代",
+      "lineage": "甜",
+      "tier": 9
+    },
+    {
+      "slug": "sundae_oreo",
+      "file": "assets/spirits/sundae_oreo.png",
+      "src": "圣代+少量奥利奥碎.png",
+      "cn": "奥利奥圣代",
+      "lineage": "甜",
+      "tier": 9
+    },
+    {
+      "slug": "sundae_choco",
+      "file": "assets/spirits/sundae_choco.png",
+      "src": "圣代+少量巧克力酱.png",
+      "cn": "巧克力圣代",
+      "lineage": "甜",
+      "tier": 9
+    }
+  ]
+}

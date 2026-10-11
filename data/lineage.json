@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "name": "麦麦精灵 McPet",
+    "version": "0.1.0",
+    "description": "喂养真实麦当劳订单长大的六系精灵养成系统"
+  },
+
+  "lineages": {
+    "薯": {
+      "name": "薯系",
+      "body": "#F5A742",
+      "light": "#FDD07A",
+      "dark": "#D98B2B",
+      "accessory": "fries",
+      "rarity": "common",
+      "title": "金薯灵"
+    },
+    "牛": {
+      "name": "牛系",
+      "body": "#D85A30",
+      "light": "#F0997B",
+      "dark": "#A8431F",
+      "accessory": "horns",
+      "rarity": "common",
+      "title": "小牛堡"
+    },
+    "鸡": {
+      "name": "鸡系",
+      "body": "#F0E3C8",
+      "light": "#FFF6E4",
+      "dark": "#CDBC9A",
+      "accessory": "comb",
+      "rarity": "common",
+      "title": "咕咕鸡"
+    },
+    "鱼": {
+      "name": "鱼系",
+      "body": "#85B7EB",
+      "light": "#B5D4F4",
+      "dark": "#5486C0",
+      "accessory": "fin",
+      "rarity": "rare",
+      "title": "鱼板仔"
+    },
+    "咖": {
+      "name": "咖系",
+      "body": "#9A6B44",
+      "light": "#C0916A",
+      "dark": "#6F4A2C",
+      "accessory": "cup",
+      "rarity": "uncommon",
+      "title": "咖啡豆豆"
+    },
+    "甜": {
+      "name": "甜系",
+      "body": "#ED93B1",
+      "light": "#F7C0D3",
+      "dark": "#C76D94",
+      "accessory": "cream",
+      "rarity": "uncommon",
+      "title": "奶油团"
+    }
+  },
+
+  "neuter": {
+    "name": "未分化",
+    "body": "#BFB8AC",
+    "light": "#D8D2C6",
+    "dark": "#A19A8E"
+  },
+
+  "keywords": {
+    "薯": ["薯条", "薯饼", "薯角", "中薯", "大薯", "小薯"],
+    "牛": ["巨无霸", "安格斯", "吉士", "双吉", "双层牛", "牛堡", "不素之霸", "纯牛肉", "培根蔬萃"],
+    "鸡": ["麦乐鸡", "鸡腿", "鸡翅", "鸡排", "脆汁鸡", "鸡块", "麦辣鸡", "板烧", "酥酥多笋卷", "那么大鸡排", "鸡柳", "麦香鸡"],
+    "鱼": ["麦香鱼", "鳕鱼", "鱼排", "鱼堡"],
+    "咖": ["麦咖啡", "拿铁", "美式", "卡布", "奶铁", "浓缩", "黑巧", "燕麦奶铁", "鲜萃"],
+    "甜": ["麦旋风", "冰淇淋", "圆筒", "新地", "派", "雪冰", "麦炫酷", "奥利奥", "爆爆珠", "圣代"]
+  },
+
+  "rules": {
+    "stage_thresholds": {
+      "hatch": 0,
+      "stage2": 30,
+      "stage3": 80,
+      "variant_extra": 40
+    },
+    "feed_multiplier": {
+      "real": 1.0,
+      "daily": 0.3,
+      "event": 1.2
+    },
+    "affinity": {
+      "same": 1.5,
+      "cross": 0.5,
+      "neutral": 0.4
+    },
+    "hetero_variant_threshold": 20,
+    "names": {
+      "stage1": "幼体",
+      "stage2": "成形",
+      "stage3": "完全体",
+      "variant": "变异体"
+    }
+  }
+}

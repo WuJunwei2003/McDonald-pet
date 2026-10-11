@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>麦麦精灵 · 六系进化谱</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#141414; color:#e8e8e8;
+         font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+         padding:40px 32px 64px; }
+  h1 { font-size:22px; font-weight:600; margin-bottom:8px; }
+  .desc { color:#9a9a9a; font-size:13px; line-height:1.9; margin-bottom:30px; }
+  .lines { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:1060px; }
+  .line { background:#1d1d1d; border:1px solid #2c2c2c; border-radius:16px; padding:14px 16px; }
+  .head { display:flex; align-items:center; gap:8px; font-size:13.5px; color:#cfcfcf; margin-bottom:12px; }
+  .dot { width:10px; height:10px; border-radius:50%; }
+  .only { font-size:11px; color:#9a9a9a; border:1px solid #2c2c2c; border-radius:99px; padding:1px 8px; }
+  .cells { display:flex; align-items:flex-start; gap:4px; }
+  .cell { flex:1; text-align:center; }
+  .cell img { height:96px; width:auto; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));
+              transition:transform .18s ease; }
+  .cell:hover img { transform:translateY(-4px) scale(1.1); }
+  .cell .t { font-size:11px; color:#7a7a7a; margin-top:6px; }
+  .cell .n { font-size:12px; color:#b8b8b8; margin-top:2px; }
+  .arrow { color:#4a4a4a; font-size:13px; padding-top:36px; }
+  .foot { margin-top:30px; color:#8a8a8a; font-size:13px; line-height:2; max-width:860px; }
+  code { background:#242424; padding:1px 6px; border-radius:4px; color:#7fe0c3; font-size:12px; }
+</style>
+</head>
+<body>
+  <h1>麦麦精灵 · 六系进化谱</h1>
+  <p class="desc">
+    形态素材由 <code>picture/</code> 原创形象经 <code>tools/prepare_spirits.py</code> 抠图归一化（512² 透明 PNG），
+    按 <code>data/forms.json</code> 绑定到「系别 × 阶段」。<br>
+    规则：喂什么变什么 —— 幼体期喂得最多的系别决定成形方向；本命系 ×1.5，异系 ×0.5 并累积变异能量。
+  </p>
+  <div class="lines"><div class="line">
+      <div class="head"><span class="dot" style="background:#F5A742"></span>
+        六系 · 薯系</div>
+      <div class="cells"><div class="cell" title="一份中薯条注入了灵魂">
+      <img src="../assets/spirits/fries_m.png" alt="金薯灵">
+      <div class="t">成形</div>
+      <div class="n">金薯灵</div>
+    </div><span class="arrow">→</span><div class="cell" title="卷卷的薯条，嚼起来更响">
+      <img src="../assets/spirits/fries_wave.png" alt="波纹金薯灵">
+      <div class="t">完全体</div>
+      <div class="n">波纹金薯灵</div>
+    </div><span class="arrow">→</span><div class="cell" title="薯条自己卷成了圈——异变">
+      <img src="../assets/spirits/fries_ring.png" alt="环形金薯灵">
+      <div class="t">变异体</div>
+      <div class="n">环形金薯灵</div>
+    </div></div>
+    </div><div class="line">
+      <div class="head"><span class="dot" style="background:#D85A30"></span>
+        六系 · 牛系</div>
+      <div class="cells"><div class="cell" title="一层牛肉一层芝士一层番茄">
+      <img src="../assets/spirits/beef_single.png" alt="小牛堡">
+      <div class="t">成形</div>
+      <div class="n">小牛堡</div>
+    </div><span class="arrow">→</span><div class="cell" title="牛肉力量翻倍">
+      <img src="../assets/spirits/beef_double.png" alt="双层小牛堡">
+      <div class="t">完全体</div>
+      <div class="n">双层小牛堡</div>
+    </div><span class="arrow">→</span><div class="cell" title="双层牛肉 + 双层芝士，究极体">
+      <img src="../assets/spirits/beef_double_cheese.png" alt="芝士双层牛堡">
+      <div class="t">变异体</div>
+      <div class="n">芝士双层牛堡</div>
+    </div></div>
+    </div><div class="line">
+      <div class="head"><span class="dot" style="background:#F0E3C8"></span>
+        六系 · 鸡系</div>
+      <div class="cells"><div class="cell" title="麦香鸡版本的咕咕鸡">
+      <img src="../assets/spirits/chicken_burger.png" alt="咕咕鸡">
+      <div class="t">成形</div>
+      <div class="n">咕咕鸡</div>
+    </div><span class="arrow">→</span><div class="cell" title="长出脆皮大腿">
+      <img src="../assets/spirits/chicken_thigh.png" alt="大腿咕咕鸡">
+      <div class="t">完全体</div>
+      <div class="n">大腿咕咕鸡</div>
+    </div><span class="arrow">→</span><div class="cell" title="脆皮小腿，跳得更高了">
+      <img src="../assets/spirits/chicken_drum.png" alt="小腿咕咕鸡">
+      <div class="t">变异体</div>
+      <div class="n">小腿咕咕鸡</div>
+    </div></div>
+    </div><div class="line">
+      <div class="head"><span class="dot" style="background:#85B7EB"></span>
+        六系 · 鱼系<span class="only">唯一形态（菜单里鱼类最少）</span></div>
+      <div class="cells"><div class="cell" title="菜单里鱼类最少——稀有系">
+      <img src="../assets/spirits/fish_burger.png" alt="鱼板仔">
+      <div class="t">成形</div>
+      <div class="n">鱼板仔</div>
+    </div></div>
+    </div><div class="line">
+      <div class="head"><span class="dot" style="background:#9A6B44"></span>
+        六系 · 咖系</div>
+      <div class="cells"><div class="cell" title="一颗刚发芽的咖啡豆">
+      <img src="../assets/spirits/coffee_bean.png" alt="咖啡豆豆">
+      <div class="t">成形</div>
+      <div class="n">咖啡豆豆</div>
+    </div><span class="arrow">→</span><div class="cell" title="攒满一整杯豆子">
+      <img src="../assets/spirits/coffee_cup_beans.png" alt="满杯咖啡豆">
+      <div class="t">完全体</div>
+      <div class="n">满杯咖啡豆</div>
+    </div><span class="arrow">→</span><div class="cell" title="豆子终于被冲成了一杯咖啡">
+      <img src="../assets/spirits/coffee_cup_drink.png" alt="出杯咖啡">
+      <div class="t">变异体</div>
+      <div class="n">出杯咖啡</div>
+    </div></div>
+    </div><div class="line">
+      <div class="head"><span class="dot" style="background:#ED93B1"></span>
+        六系 · 甜系</div>
+      <div class="cells"><div class="cell" title="一杯原味圣代">
+      <img src="../assets/spirits/sundae.png" alt="奶油团">
+      <div class="t">成形</div>
+      <div class="n">奶油团</div>
+    </div><span class="arrow">→</span><div class="cell" title="顶上多了一颗车厘子">
+      <img src="../assets/spirits/sundae_cherry.png" alt="车厘子奶油团">
+      <div class="t">完全体</div>
+      <div class="n">车厘子奶油团</div>
+    </div><span class="arrow">→</span><div class="cell" title="草莓酱失控——甜度爆表">
+      <img src="../assets/spirits/sundae_strawberry_heavy.png" alt="草莓火山奶油团">
+      <div class="t">变异体</div>
+      <div class="n">草莓火山奶油团</div>
+    </div></div>
+    </div></div>
+  <p class="foot">
+    网页版里这些形态会随你的真实订单成长实时切换，并配有立体舞台与 3D 手办柜：
+    运行 <code>python app.py</code> 体验。本页为实际素材渲染效果，非示意图。
+  </p>
+</body>
+</html>

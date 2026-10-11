@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦精灵 · McPet</title>
+<style>
+  :root {
+    --bg:#141414; --card:#1d1d1d; --line:#2c2c2c; --text:#e8e8e8;
+    --muted:#9a9a9a; --gold:#F5A742; --gold-soft:#FDD07A; --green:#5DCAA5;
+    --aura:#BFB8AC;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    min-height:100vh; padding:24px;
+  }
+  .wrap { max-width:1080px; margin:0 auto; }
+
+  header { display:flex; align-items:baseline; gap:12px; margin-bottom:22px; }
+  header h1 { font-size:20px; font-weight:600; }
+  header .en { color:var(--muted); font-size:13px; }
+  header .tag { margin-left:auto; font-size:12px; color:var(--muted);
+                border:1px solid var(--line); border-radius:99px; padding:4px 12px; }
+
+  .grid { display:grid; grid-template-columns:1.1fr 1fr; gap:20px; }
+  @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
+
+  /* ============ 立体舞台 ============ */
+  .stage {
+    position:relative; min-height:420px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; overflow:hidden;
+    background:radial-gradient(circle at 50% 40%, #2a2318 0%, #1d1d1d 64%);
+  }
+  .stage .name { position:absolute; top:14px; left:18px; font-size:15px; font-weight:600; }
+
+  .scene {
+    position:relative; width:100%; height:330px; display:flex;
+    align-items:center; justify-content:center;
+    perspective: 950px; cursor:grab;
+  }
+  .spirit3d {
+    position:relative; width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    transform-style:preserve-3d;
+    transition: transform .22s ease-out;
+  }
+
+  /* 光晕（深处视差层） */
+  .aura {
+    position:absolute; left:50%; top:46%;
+    width:300px; height:300px; margin:-150px 0 0 -150px;
+    border-radius:50%;
+    background:radial-gradient(circle, var(--aura) 0%, transparent 62%);
+    transform: translateZ(-90px) scale(0.9);
+    animation: auraPulse 4.2s ease-in-out infinite;
+    filter:blur(2px);
+  }
+  @keyframes auraPulse { 0%,100%{ opacity:.75; } 50%{ opacity:1; } }
+
+  /* 精灵本体（浮动层） */
+  .float { position:relative; transform-style:preserve-3d;
+           animation: floatY 3.4s ease-in-out infinite; }
+  .float .spirit {
+    display:block; height:238px; width:auto;
+    transform: translateZ(52px);
+    filter:
+      drop-shadow(0 2px 0 rgba(255,255,255,.10))
+      drop-shadow(0 16px 26px rgba(0,0,0,.5));
+    transition: height .45s ease;
+    user-select:none; -webkit-user-drag:none;
+  }
+  .float .svgHolder svg {
+    display:block; height:210px; width:auto;
+    transform: translateZ(52px);
+    filter: drop-shadow(0 16px 26px rgba(0,0,0,.5));
+  }
+  @keyframes floatY { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-10px); } }
+
+  /* 地面投影（跟随浮动做缩放呼吸） */
+  .shadow3d {
+    position:absolute; left:50%; bottom:26px; width:210px; height:34px;
+    margin-left:-105px; border-radius:50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,.55) 0%, transparent 68%);
+    animation: shadowPulse 3.4s ease-in-out infinite;
+    transform: translateZ(6px);
+  }
+  @keyframes shadowPulse {
+    0%,100%{ transform: translateZ(6px) scaleX(1);   opacity:.85; }
+    50%     { transform: translateZ(6px) scaleX(.84); opacity:.6; }
+  }
+
+  /* 反光扫过（按角色剪影遮罩） */
+  .shine {
+    position:absolute; inset:0; pointer-events:none; opacity:0;
+    background:linear-gradient(105deg, transparent 40%, rgba(255,255,255,.55) 50%, transparent 60%);
+    -webkit-mask-image:var(--mask);         mask-image:var(--mask);
+    -webkit-mask-size:contain;              mask-size:contain;
+    -webkit-mask-repeat:no-repeat;          mask-repeat:no-repeat;
+    -webkit-mask-position:center;           mask-position:center;
+    transform: translateZ(53px);
+  }
+  .scene:hover .shine { animation: sweep 1.05s ease .05s; }
+  @keyframes sweep {
+    0%   { opacity:0; background-position:-160% 0; }
+    18%  { opacity:1; }
+    100% { opacity:0; background-position:260% 0; }
+  }
+
+  /* 漂浮粒子（前置视差层） */
+  .sparkles { position:absolute; inset:0; pointer-events:none; transform-style:preserve-3d; }
+  .sparkles i {
+    position:absolute; font-style:normal; font-size:14px;
+    color:#FFE9B8; text-shadow:0 0 10px rgba(255,214,130,.9);
+    opacity:0; transform: translateZ(92px);
+    animation: twinkle 3.8s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity:0; transform: translateZ(92px) scale(.5) translateY(8px); }
+    50%     { opacity:.95; transform: translateZ(92px) scale(1) translateY(-8px); }
+  }
+  .sparkles i:nth-child(1){ left:17%; top:22%; animation-delay:.2s; }
+  .sparkles i:nth-child(2){ right:15%; top:16%; animation-delay:1.1s; font-size:11px; }
+  .sparkles i:nth-child(3){ left:11%; bottom:28%; animation-delay:1.9s; font-size:12px; }
+  .sparkles i:nth-child(4){ right:20%; bottom:22%; animation-delay:2.7s; }
+  .sparkles i:nth-child(5){ left:46%; top:5%;  animation-delay:1.5s; font-size:18px; }
+  .sparkles i:nth-child(6){ right:38%; bottom:8%; animation-delay:3.2s; font-size:10px; }
+
+  /* 变异体：金色氛围 */
+  .scene.variant .aura { filter:blur(1px) saturate(1.4); }
+  .scene.variant .sparkles i { color:#FFD662; }
+  .variantBadge {
+    position:absolute; top:12px; right:16px; display:none;
+    font-size:12px; padding:4px 12px; border-radius:99px;
+    color:#FFE9B8; border:1px solid #8a6a20; background:#3a2f14;
+    box-shadow:0 0 18px rgba(255,214,98,.35);
+  }
+  .scene.variant ~ .variantBadge { display:block; }
+
+  /* 阶段缩放：幼体 → 成形 → 完全体 */
+  .scene.stage-1 .spirit { height:148px; }
+  .scene.stage-1 .svgHolder svg { height:130px; }
+  .scene.stage-2 .spirit { height:196px; }
+
+  .charTag { font-size:14px; font-weight:600; color:var(--gold-soft); margin-top:2px; }
+  .charTag small { color:var(--muted); font-weight:400; margin-left:6px; }
+  .stage .mood { font-size:12px; color:var(--muted); margin-top:8px; min-height:16px; }
+
+  .meter { margin-top:14px; }
+  .meter .bar { height:10px; background:#2a2a2a; border-radius:99px; overflow:hidden; }
+  .meter .fill { height:100%; width:0; border-radius:99px;
+                 background:linear-gradient(90deg,#D98B2B,#FDD07A); transition:width .6s ease; }
+  .meter .txt { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:6px; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip { font-size:12px; padding:5px 11px; border-radius:99px;
+          border:1px solid var(--line); color:var(--muted); }
+  .chip b { color:var(--gold-soft); font-weight:500; }
+  .chip.hot { border-color:#5a3d12; color:#FAC775; }
+
+  h3 { font-size:14px; font-weight:500; color:#cfcfcf; margin-bottom:12px; }
+
+  button {
+    background:var(--gold); color:#241a06; border:none; border-radius:12px;
+    font-size:14px; font-weight:600; padding:11px 18px; cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  button:hover { filter:brightness(1.08); }
+  button:active { transform:scale(.97); }
+  button.ghost { background:#262626; color:var(--text); border:1px solid var(--line); font-weight:400; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+
+  .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+
+  .pantrygrid { display:flex; flex-wrap:wrap; gap:10px; }
+  .food {
+    display:flex; align-items:center; gap:8px; cursor:pointer;
+    background:#161616; border:1px solid var(--line); border-radius:14px;
+    padding:8px 16px; font-size:14px; transition:border-color .15s ease, transform .1s ease;
+    user-select:none;
+  }
+  .food:hover { border-color:#5a4a2a; transform:translateY(-2px); }
+  .food:active { transform:scale(.97); }
+  .food .dot { width:10px; height:10px; border-radius:50%; flex:none; }
+  .food img.ficon { height:30px; width:30px; object-fit:contain; flex:none;
+                    filter:drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
+  .food b { color:var(--gold-soft); font-weight:600; margin-left:2px; }
+  .food small { color:#7a7a7a; font-size:11px; }
+
+  .pantry-empty { color:var(--muted); font-size:13.5px; line-height:2; padding:8px 0; }
+  .pantry-empty b { color:var(--gold-soft); }
+
+  /* ============ 进化谱 ============ */
+  .linegrid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  @media (max-width:820px){ .linegrid { grid-template-columns:1fr; } }
+  .line { background:#161616; border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
+  .line .head { display:flex; align-items:center; gap:8px; font-size:13px; color:#cfcfcf; margin-bottom:12px; }
+  .line .head .dot { width:10px; height:10px; border-radius:50%; flex:none; }
+  .line .head .rareTag { font-size:11px; color:#F09595; border:1px solid #5c2e2e; border-radius:99px; padding:1px 8px; }
+  .line .head .onlyTag { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:1px 8px; }
+  .line .forms { display:flex; align-items:flex-start; gap:4px; }
+  .line .formCell { flex:1; text-align:center; }
+  .line .formCell img {
+    height:62px; width:auto; cursor:pointer;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));
+    transition:transform .18s ease, filter .18s ease;
+  }
+  .line .formCell:hover img { transform:translateY(-3px) scale(1.14); filter:drop-shadow(0 10px 16px rgba(0,0,0,.5)); }
+  .line .formCell .t { font-size:11px; color:#7a7a7a; margin-top:6px; }
+  .line .formCell .n { font-size:11px; color:var(--muted); margin-top:2px; }
+  .line .arrow { color:#4a4a4a; font-size:13px; padding-top:22px; }
+
+  /* ============ 3D 手办柜 ============ */
+  .tab3drow { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .tab3d { font-size:12.5px; padding:7px 13px; border-radius:99px; cursor:pointer;
+           border:1px solid var(--line); background:#1a1a1a; color:var(--muted);
+           transition:all .15s ease; user-select:none; }
+  .tab3d:hover { border-color:#5a4a2a; color:var(--text); }
+  .tab3d.active { background:var(--gold); border-color:var(--gold); color:#241a06; font-weight:600; }
+  .tab3d.home:not(.active) { border-color:#8a6a20; color:var(--gold-soft); }
+  .tab3d.missing { opacity:.4; cursor:not-allowed; }
+  .stage3d { position:relative; border-radius:14px; overflow:hidden; height:460px;
+             background:radial-gradient(circle at 50% 38%, #2a2318 0%, #1b1b1b 66%);
+             border:1px solid var(--line); }
+  .stage3d model-viewer { width:100%; height:100%; background:transparent;
+                          --poster-color:transparent; }
+  .mv3d-hint { position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+               font-size:12px; color:var(--muted); background:rgba(0,0,0,.42);
+               border:1px solid #2e2e2e; padding:5px 13px; border-radius:99px;
+               white-space:nowrap; pointer-events:none; }
+  .mv3d-empty { color:var(--muted); font-size:13px; padding:4px 0 2px; }
+  .mv3d-empty b { color:var(--gold-soft); }
+
+  .toast {
+    position:fixed; left:50%; bottom:36px; transform:translateX(-50%) translateY(24px);
+    background:#2b2b2b; border:1px solid #3a3a3a; color:var(--text);
+    padding:12px 20px; border-radius:14px; font-size:14px; max-width:88vw;
+    opacity:0; pointer-events:none; transition:all .3s ease; box-shadow:0 12px 30px rgba(0,0,0,.5);
+    z-index:50;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.gold { border-color:#8a6a20; }
+
+  .flyGhost {
+    position:fixed; z-index:60; pointer-events:none;
+    transition: transform .72s cubic-bezier(.3,.7,.4,1), opacity .72s ease;
+    filter:drop-shadow(0 8px 14px rgba(0,0,0,.5));
+  }
+
+  .empty { text-align:center; padding:26px 0; color:var(--muted); font-size:14px; line-height:2; }
+  .empty input { margin:14px auto 0; display:block; max-width:240px; text-align:center;
+                 background:#151515; border:1px solid var(--line); border-radius:12px;
+                 color:var(--text); font-size:14px; padding:11px 14px; outline:none; }
+  .foot { margin-top:26px; color:#7a7a7a; font-size:12px; line-height:1.9; }
+  .foot code { background:#222; padding:1px 6px; border-radius:4px; color:#8fd; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>麦麦精灵</h1>
+    <span class="en">McPet · 喂我点什么，我就长成什么样</span>
+    <span class="tag" id="modeTag">本地模式</span>
+  </header>
+
+  <div class="grid">
+    <div class="card stage" id="stage">
+      <div class="name" id="stageName"></div>
+
+      <div class="scene" id="scene" style="display:none">
+        <div class="spirit3d" id="spirit3d">
+          <div class="aura"></div>
+          <div class="float">
+            <img class="spirit" id="spiritImg" alt="" style="display:none">
+            <div class="svgHolder" id="svgHolder" style="display:none"></div>
+            <div class="shine" id="shine"></div>
+          </div>
+          <div class="shadow3d"></div>
+          <div class="sparkles"><i>✦</i><i>✦</i><i>✦</i><i>✦</i><i>✦</i><i>✦</i></div>
+        </div>
+      </div>
+      <div class="variantBadge">⚡ 变异体</div>
+
+      <div class="charTag" id="charTag"></div>
+      <div class="mood" id="moodLine"></div>
+
+      <div class="empty" id="hatchBox">
+        还没有精灵<br>先孵化一颗蛋吧
+        <input type="text" id="hatchName" placeholder="给它起个名字（可选）" maxlength="12">
+        <button style="margin-top:14px" onclick="hatch()">🥚 孵化</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>状态</h3>
+      <div id="statBox" class="empty">—</div>
+
+      <h3 style="margin-top:18px">获取食物</h3>
+      <div class="btnrow">
+        <button onclick="syncNow()">📦 同步真实订单</button>
+        <button class="ghost" onclick="simulateNow()">🎲 模拟订单</button>
+      </div>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="ghost" onclick="resetSpirit()">↻ 重新开始</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card gallery" style="margin-top:20px">
+    <h3>🍱 食物库存 <span style="color:#7a7a7a;font-size:12px;font-weight:400">（点一下食物 = 喂给精灵）</span></h3>
+    <div id="pantryBox"></div>
+  </div>
+
+  <div class="card gallery">
+    <h3>六系进化谱 <span style="color:#7a7a7a;font-size:12px;font-weight:400">（成形 → 完全体 → 变异体）</span></h3>
+    <div class="linegrid" id="galleryRow"></div>
+  </div>
+
+  <div class="card gallery" id="cab3d">
+    <h3>🔮 3D 手办柜 <span style="color:#7a7a7a;font-size:12px;font-weight:400">（六系代表形态 · 拖动旋转 / 滚轮缩放）</span></h3>
+    <div class="tab3drow" id="tabs3d"></div>
+    <div class="stage3d" id="stage3d" style="display:none">
+      <model-viewer id="mv3d" camera-controls auto-rotate rotation-per-second="22deg"
+                    shadow-intensity="1.1" exposure="1.05" environment-image="neutral"
+                    interaction-prompt="none" alt="麦麦精灵 3D 手办"></model-viewer>
+      <div class="mv3d-hint" id="mv3dHint">—</div>
+    </div>
+    <div class="mv3d-empty" id="mv3dEmpty">
+      点击上方页签，把六系手办转起来 —— <b>金色边框 = 你的本命系</b>
+    </div>
+  </div>
+
+  <div class="foot">
+    数据链路：本页 → 本机服务 → 麦当劳 MCP（<code>order-list</code>）→ 订单入库 →
+    从库存喂养（库存扣减）。精灵形态来自真实餐品形象素材（<code>tools/prepare_spirits.py</code> 抠图归一化）；
+    鼠标移到精灵上可以「转一转」。状态保存在本地，与 CLI 互通。
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LIN_COLOR = {"薯":"#F5A742","牛":"#D85A30","鸡":"#F0E3C8","鱼":"#85B7EB","咖":"#9A6B44","甜":"#ED93B1"};
+const TIER_LABEL = {"2":"成形","3":"完全体","4":"变异体"};
+
+let state = null;
+
+function toast(msg, gold) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (gold ? " gold" : "");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = "toast"; }, 3400);
+}
+
+function setConn(ok) {
+  const t = document.getElementById("modeTag");
+  if (ok) { t.textContent = "● 已连接"; t.style.color = "#5DCAA5"; t.style.borderColor = "#2e5c4c"; }
+  else { t.textContent = "● 服务未连接"; t.style.color = "#F09595"; t.style.borderColor = "#5c2e2e"; }
+}
+
+async function api(path, body) {
+  try {
+    const opt = body ? {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body),
+    } : {};
+    const r = await fetch(path, opt);
+    if (!r.ok && r.status >= 500) {
+      const t = await r.text();
+      return {ok: false, error: `HTTP ${r.status}：${t.slice(0, 120)}`};
+    }
+    const d = await r.json();
+    setConn(true);
+    return d;
+  } catch (e) {
+    setConn(false);
+    return {ok: false, error: "无法连接本地服务 —— 请双击 mcpet 目录下的「启动麦麦精灵.bat」，然后刷新本页"};
+  }
+}
+
+function hexA(hex, a) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || "");
+  if (!m) return `rgba(191,184,172,${a})`;
+  return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+}
+
+/* ---------------- 立体倾斜 ---------------- */
+(function initTilt() {
+  const scene = document.getElementById("scene");
+  const box = document.getElementById("spirit3d");
+  let raf = 0;
+  scene.addEventListener("mousemove", (e) => {
+    if (raf) return;
+    const r = scene.getBoundingClientRect();
+    const dx = (e.clientX - r.left) / r.width - 0.5;
+    const dy = (e.clientY - r.top) / r.height - 0.5;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      box.style.transform =
+        `rotateX(${(-dy * 13).toFixed(2)}deg) rotateY(${(dx * 20).toFixed(2)}deg)`;
+    });
+  });
+  scene.addEventListener("mouseleave", () => { box.style.transform = ""; });
+})();
+
+/* ---------------- 渲染 ---------------- */
+
+function renderSpirit(st) {
+  const scene = document.getElementById("scene");
+  const img = document.getElementById("spiritImg");
+  const holder = document.getElementById("svgHolder");
+  const shine = document.getElementById("shine");
+
+  scene.className = "scene stage-" + st.stage + (st.stage === 4 ? " variant" : "");
+  const color = LIN_COLOR[st.lineage] || LIN_COLOR[st.top_lineage] || "#BFB8AC";
+  scene.style.setProperty("--aura", hexA(color, 0.34));
+
+  const showSvg = () => {
+    img.style.display = "none";
+    holder.style.display = "block";
+    if (holder.dataset.svg !== st.svg) { holder.dataset.svg = st.svg; holder.innerHTML = st.svg; }
+  };
+
+  if (st.form_img) {
+    if (img.dataset.src !== st.form_img) {
+      img.dataset.src = st.form_img;
+      img.src = st.form_img;
+      shine.style.setProperty("--mask", `url("${st.form_img}")`);
+    }
+    img.onerror = showSvg;
+    img.style.display = "block";
+    holder.style.display = "none";
+  } else {
+    showSvg();
+  }
+}
+
+function render() {
+  const st = state;
+  const hatchBox = document.getElementById("hatchBox");
+  const scene = document.getElementById("scene");
+
+  if (!st || st.ok === false) {
+    hatchBox.style.display = "block";
+    scene.style.display = "none";
+    document.getElementById("statBox").innerHTML =
+      `<div class="empty" style="color:#F09595">⚠️ ${(st && st.error) || "未连接到本地服务"}</div>`;
+    return;
+  }
+
+  markHome3d();
+  renderPantry(st);
+
+  if (!st.hatched) {
+    hatchBox.style.display = "block";
+    scene.style.display = "none";
+    document.getElementById("stageName").textContent = "";
+    document.getElementById("charTag").textContent = "";
+    document.getElementById("moodLine").textContent = "";
+    document.getElementById("statBox").innerHTML = '<div class="empty">孵化后可查看</div>';
+    return;
+  }
+  hatchBox.style.display = "none";
+  scene.style.display = "flex";
+  document.getElementById("stageName").textContent = st.name;
+  renderSpirit(st);
+
+  const lin = st.lineage ? `<span class="chip hot">${st.lineage_name} · ${st.title}</span>` : "";
+  document.getElementById("statBox").innerHTML = `
+    <div class="chips">
+      <span class="chip">阶段 <b>${st.stage_label}</b></span>
+      ${lin || `<span class="chip">未分化 · 喂得最多：<b>${st.top_lineage || "暂无"}</b></span>`}
+      <span class="chip">心情 <b>${st.mood}</b></span>
+      <span class="chip">喂养 <b>${st.feed_count}</b> 次</span>
+    </div>
+    <div class="meter">
+      <div class="bar"><div class="fill" style="width:${st.pct}%"></div></div>
+      <div class="txt"><span>经验 ${st.exp}</span><span>${st.stage === 4 ? "已突破形态 ⚡" : "下一阶段 " + st.next}</span></div>
+    </div>
+    ${Object.keys(st.hetero || {}).length ? `
+    <div class="chips"><span class="chip">异系能量 ${Object.entries(st.hetero)
+        .map(([k,v])=>`${k} ${v}`).join(" / ")}（满 20 变异）</span></div>` : ""}
+  `;
+
+  const tag = document.getElementById("charTag");
+  tag.innerHTML = st.form_name
+    ? `${st.form_name}<small>${st.stage_label}${st.form_desc ? " · " + st.form_desc : ""}</small>`
+    : "";
+  document.getElementById("moodLine").textContent = st.fed_meals && st.fed_meals.length
+    ? "最近吃过：" + st.fed_meals.slice(0,5).join("、") : "";
+}
+
+function renderPantry(st) {
+  const box = document.getElementById("pantryBox");
+  const p = st.pantry || {items: [], total: 0};
+  if (!p.total) {
+    box.innerHTML = `<div class="pantry-empty">
+      还没有食物 —— 点 <b>📦 同步真实订单</b> 把你的麦当劳订单变成食物，
+      或点 <b>🎲 模拟订单</b> 先体验一下。
+    </div>`;
+    return;
+  }
+  box.innerHTML = `<div class="pantrygrid">` + p.items.map(it => {
+    const tag = it.lineage ? it.lineage : "—";
+    const vis = it.icon
+      ? `<img class="ficon" src="${it.icon}" alt="">`
+      : `<span class="dot" style="background:${LIN_COLOR[it.lineage] || "#888780"}"></span>`;
+    return `<div class="food" onclick="feed('${it.name.replace(/'/g, "\\'")}', this)"
+              title="点击喂给精灵（${tag}系）">
+      ${vis}
+      ${it.name} <b>×${it.qty}</b> <small>${tag}</small>
+    </div>`;
+  }).join("") + `</div>
+  <div style="margin-top:10px;color:#7a7a7a;font-size:12px">
+    共 ${p.total} 份食物 · 点击食物喂给精灵
+  </div>`;
+}
+
+/* ---------------- 投喂动画 ---------------- */
+
+function flyGhost(from) {
+  const target = document.getElementById("spiritImg");
+  if (!target || target.style.display === "none") return;
+  const b = target.getBoundingClientRect();
+  if (!b.width || !from.width) return;
+  const ghost = document.createElement("img");
+  ghost.className = "flyGhost";
+  ghost.src = from.src;
+  ghost.style.left = from.left + "px";
+  ghost.style.top = from.top + "px";
+  ghost.style.width = from.width + "px";
+  ghost.style.height = from.height + "px";
+  document.body.appendChild(ghost);
+  requestAnimationFrame(() => {
+    const dx = (b.left + b.width / 2) - (from.left + from.width / 2);
+    const dy = (b.top + b.height / 2) - (from.top + from.height / 2);
+    ghost.style.transform = `translate(${dx}px, ${dy}px) scale(.25) rotate(18deg)`;
+    ghost.style.opacity = "0.15";
+  });
+  setTimeout(() => ghost.remove(), 780);
+}
+
+/* ---------------- 操作 ---------------- */
+
+async function refresh() {
+  state = await api("/api/state");
+  render();
+}
+
+async function hatch() {
+  const name = document.getElementById("hatchName").value.trim();
+  const r = await api("/api/hatch", {name});
+  if (!r.ok) { toast(r.error || "孵化失败"); return; }
+  state = r.state; render();
+  toast("🥚 蛋孵化了！先同步订单获得食物，再喂给它", true);
+}
+
+async function feed(meal, el) {
+  if (!state || !state.hatched) { toast("先孵化一只精灵"); return; }
+  const icon = el ? el.querySelector("img.ficon") : null;
+  const from = icon ? icon.getBoundingClientRect() : null;
+  const r = await api("/api/feed", {meal});
+  if (!r.ok) { toast(r.error || "喂养失败"); return; }
+  state = r.state; render();
+  if (from) flyGhost(from);
+  toast(`🍽️「${meal}」+${r.event.exp_gained} ｜ ${r.event.message}`,
+        r.event.evolved || r.event.variant);
+}
+
+function _fmtAdded(added) {
+  const e = Object.entries(added || {});
+  if (!e.length) return "（无新食物）";
+  return e.sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}×${v}`).join("、");
+}
+
+async function syncNow() {
+  if (!state || !state.hatched) { toast("先孵化一只精灵"); return; }
+  toast("正在拉取真实订单…");
+  const r = await api("/api/sync", {});
+  if (!r.ok) { toast(r.error || "同步失败"); return; }
+  state = r.state; render();
+  if (!r.new_orders) {
+    toast(r.message || "没有新的订单（已入库的不会重复获得食物）");
+    return;
+  }
+  toast(`📦 新增 ${r.new_orders} 单 → 入库：${_fmtAdded(r.added)}（跳过已入库 ${r.skipped} 单）`, true);
+}
+
+async function simulateNow() {
+  if (!state || !state.hatched) { toast("先孵化一只精灵"); return; }
+  const r = await api("/api/simulate", {});
+  if (!r.ok) { toast(r.error || "模拟失败"); return; }
+  state = r.state; render();
+  toast(`🎲 模拟订单入库：${_fmtAdded(r.added)}`, true);
+}
+
+async function resetSpirit() {
+  if (!confirm("重新开始会清空精灵的成长进度（食物库存保留），确定？")) return;
+  const r = await api("/api/reset", {});
+  if (!r.ok) { toast(r.error || "失败"); return; }
+  state = r.state; render();
+  toast("已重新开始");
+}
+
+async function loadGallery() {
+  const g = await api("/api/lineages");
+  if (!g || g.ok === false) return;
+  document.getElementById("galleryRow").innerHTML = Object.entries(g).map(([k, v]) => {
+    const cells = v.forms.map((f, i) => `
+      ${i ? '<span class="arrow">→</span>' : ""}
+      <div class="formCell" title="${f.desc || ""}">
+        <img src="${f.img}" alt="${f.name}">
+        <div class="t">${TIER_LABEL[f.tier] || ""}</div>
+        <div class="n">${f.name}</div>
+      </div>`).join("");
+    const rare = v.rarity === "rare" ? '<span class="rareTag">稀有</span>' : "";
+    const only = v.forms.length === 1 ? '<span class="onlyTag">唯一形态</span>' : "";
+    return `<div class="line">
+      <div class="head"><span class="dot" style="background:${LIN_COLOR[k]}"></span>${v.name} · ${v.title}${rare}${only}</div>
+      <div class="forms">${cells}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------------- 3D 手办柜 ---------------- */
+
+const MODELS3D = [
+  ["fries_m",            "薯", "金薯灵"],
+  ["beef_double_cheese", "牛", "芝士双层牛堡"],
+  ["chicken_burger",     "鸡", "咕咕鸡"],
+  ["fish_burger",        "鱼", "鱼板仔"],
+  ["coffee_cup_drink2",  "咖", "咖啡·外带"],
+  ["sundae_cherry",      "甜", "车厘子奶油团"],
+];
+let mvScriptLoaded = false;
+
+function ensureMv() {
+  if (mvScriptLoaded) return Promise.resolve();
+  return new Promise((res) => {
+    const s = document.createElement("script");
+    s.type = "module";
+    s.src = "/assets/3d/model-viewer.min.js";
+    s.onload = () => { mvScriptLoaded = true; res(); };
+    s.onerror = () => res();
+    document.head.appendChild(s);
+  });
+}
+
+async function load3d(slug) {
+  const tab = [...document.querySelectorAll(".tab3d")].find(t => t.dataset.slug === slug);
+  if (!tab || tab.classList.contains("missing")) return;
+  document.querySelectorAll(".tab3d").forEach(t => t.classList.toggle("active", t === tab));
+  document.getElementById("stage3d").style.display = "block";
+  document.getElementById("mv3dEmpty").style.display = "none";
+  const hint = document.getElementById("mv3dHint");
+  hint.textContent = "加载模型中…（首次约 10MB）";
+  await ensureMv();
+  const mv = document.getElementById("mv3d");
+  if (!mv.dataset.bound) {
+    mv.dataset.bound = "1";
+    mv.addEventListener("load", () => {
+      hint.textContent = "拖动旋转 · 滚轮缩放 · 双击复位（" + (mv.dataset.label || "") + "）";
+    });
+    mv.addEventListener("error", () => { hint.textContent = "⚠️ 模型加载失败"; });
+  }
+  const m = MODELS3D.find(x => x[0] === slug);
+  mv.dataset.label = m ? m[1] + "系 · " + m[2] : "";
+  mv.src = "/assets/3d/" + slug + ".glb";
+}
+
+function markHome3d() {
+  const lin = state && (state.lineage || state.top_lineage);
+  document.querySelectorAll(".tab3d").forEach(t => {
+    t.classList.toggle("home", !!lin && t.dataset.lin === lin);
+  });
+}
+
+async function init3d() {
+  const tabs = document.getElementById("tabs3d");
+  tabs.innerHTML = MODELS3D.map(([slug, lin, name]) =>
+    `<div class="tab3d" data-slug="${slug}" data-lin="${lin}" onclick="load3d('${slug}')">${lin}系 · ${name}</div>`
+  ).join("");
+  const checks = await Promise.all(MODELS3D.map(([slug]) =>
+    fetch("/assets/3d/" + slug + ".glb", { method: "HEAD" }).then(r => r.ok).catch(() => false)));
+  MODELS3D.forEach((m, i) => {
+    if (!checks[i]) tabs.children[i].classList.add("missing");
+  });
+  markHome3d();
+  if (!checks.some(Boolean)) {
+    document.getElementById("mv3dEmpty").innerHTML =
+      '<span style="color:#7a7a7a">手办生成中……（tools/gen3d.py 批量生成后刷新即可）</span>';
+    return;
+  }
+  // 首次进入视口时，自动展示本命系手办
+  const io = new IntersectionObserver((entries) => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    io.disconnect();
+    const lin = state && (state.lineage || state.top_lineage);
+    let pick = null;
+    if (lin) pick = MODELS3D.find((m, i) => m[1] === lin && checks[i]);
+    if (!pick) pick = MODELS3D.find((m, i) => checks[i]);
+    if (pick) load3d(pick[0]);
+  }, { threshold: 0.2 });
+  io.observe(document.getElementById("cab3d"));
+}
+
+document.getElementById("hatchName").addEventListener("keydown", e => {
+  if (e.key === "Enter") hatch();
+});
+
+loadGallery();
+init3d();
+refresh();
+</script>
+</body>
+</html>
